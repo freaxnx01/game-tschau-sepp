@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8">
+  <title>Tschau Sepp</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,400;0,600;0,700;0,900;1,600&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #4a3категория; }
+    * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+    @keyframes dealDown { from { opacity: 0; transform: translate(-50%, -46vh) rotate(24deg) scale(0.6); } }
+    @keyframes dealUp { from { opacity: 0; transform: translate(-50%, 34vh) rotate(-24deg) scale(0.6); } }
+    @keyframes slap { from { opacity: 0.4; transform: translate(-50%, -46%) scale(1.18); } }
+    @keyframes pulseBtn { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(240,194,67,0.7), 0 6px 16px rgba(0,0,0,0.5); } 50% { transform: scale(1.07); box-shadow: 0 0 0 14px rgba(240,194,67,0), 0 6px 16px rgba(0,0,0,0.5); } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.7) translateY(20px); } }
+    @keyframes bubbleIn { from { opacity: 0; transform: scale(0.5) rotate(-8deg); } }
+  </style>
+</helmet>
+
+<div style="position: fixed; inset: 0; font-family: 'Vollkorn', Georgia, serif; display: flex; flex-direction: column; background: repeating-linear-gradient(90deg, rgba(0,0,0,0.22) 0px, rgba(0,0,0,0.22) 2px, rgba(255,255,255,0.03) 2px, rgba(0,0,0,0) 6px, rgba(0,0,0,0) 138px, rgba(0,0,0,0.18) 140px), linear-gradient(90deg, #5a3d26, #6b4a2e 12%, #563922 25%, #6b4a2e 38%, #5a3d26 50%, #6f4c30 62%, #55381f 75%, #6b4a2e 88%, #5a3d26);">
+
+  <!-- ================= TOP BAR ================= -->
+  <div data-screen-label="Topbar" style="height: 58px; display: flex; align-items: center; gap: 18px; padding: 0 22px; background: linear-gradient(180deg, rgba(30,18,8,0.55), rgba(30,18,8,0.25)); border-bottom: 2px solid rgba(0,0,0,0.4); box-shadow: 0 2px 10px rgba(0,0,0,0.4);">
+    <div style="font-size: 26px; font-weight: 900; color: #f0c243; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.6); white-space: nowrap; flex-shrink: 0;">Tschau Sepp</div>
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 20px; min-width: 0; overflow: hidden;">
+      <sc-if value="{{ started }}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; align-items: center; gap: 8px; color: #f3ead2; font-size: 18px; font-weight: 700; white-space: nowrap; flex-shrink: 0;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ duDot }}; box-shadow: 0 0 8px {{ duDot }};"></span>
+          <span>Du: {{ scoreDu }}</span>
+        </div>
+        <div style="color: #cbb98a; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ roundLine }}</div>
+        <div style="display: flex; align-items: center; gap: 8px; color: #f3ead2; font-size: 18px; font-weight: 700; white-space: nowrap; flex-shrink: 0;">
+          <span style="width: 10px; height: 10px; border-radius: 50%; background: {{ compDot }}; box-shadow: 0 0 8px {{ compDot }};"></span>
+          <span>Computer: {{ scoreComp }}</span>
+        </div>
+      </sc-if>
+    </div>
+    <div style="display: flex; gap: 10px; flex-shrink: 0; white-space: nowrap;">
+      <button onClick="{{ openRules }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">Regle</button>
+      <button onClick="{{ toggleSound }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">{{ soundLabel }}</button>
+      <sc-if value="{{ started }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ toMenu }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">Neus Spiel</button>
+      </sc-if>
+    </div>
+  </div>
+
+  <!-- ================= FELT TABLE ================= -->
+  <div style="flex: 1; position: relative; margin: 14px 20px 20px; border-radius: 28px; border: 12px solid transparent; background: {{ feltBg }}; box-shadow: inset 0 0 90px rgba(0,0,0,0.55), inset 0 0 0 2px rgba(240,194,67,0.35), 0 10px 34px rgba(0,0,0,0.55), 0 0 0 12px #3a2818, 0 0 0 14px #241708;">
+
+    <sc-if value="{{ started }}" hint-placeholder-val="{{ false }}">
+      <!-- Computer hand -->
+      <div data-screen-label="Computer" style="position: absolute; top: 22px; left: 0; right: 0; height: 150px;">
+        <sc-for list="{{ botCards }}" as="c" hint-placeholder-count="0">
+          <div style="position: absolute; left: 50%; top: 0; width: {{ botW }}px; aspect-ratio: 2 / 3; background-image: url({{ backUri }}); background-size: 100% 100%; border-radius: 8px; transform-origin: 50% 0; transform: {{ c.tf }}; transition: transform 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.45); animation: dealUp 0.45s {{ c.delay }} backwards;"></div>
+        </sc-for>
+        <div style="position: absolute; top: {{ botLabelY }}px; left: 50%; transform: translateX(-50%); color: rgba(243,234,210,0.85); font-size: 15px; font-weight: 600; background: rgba(0,0,0,0.28); padding: 3px 14px; border-radius: 20px; white-space: nowrap;">Computer · {{ botCount }} Charte</div>
+      </div>
+
+      <!-- Speech bubble -->
+      <sc-if value="{{ showBubble }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; top: 52px; left: calc(50% + 220px); background: #f3ead2; color: #7c1f26; font-size: 26px; font-weight: 900; padding: 10px 24px; border-radius: 20px 20px 20px 4px; border: 3px solid #7c1f26; box-shadow: 0 6px 16px rgba(0,0,0,0.4); animation: bubbleIn 0.25s; z-index: 30;">{{ bubbleText }}</div>
+      </sc-if>
+
+      <!-- Message -->
+      <div style="position: absolute; top: {{ msgTop }}px; left: 50%; transform: translateX(-50%); max-width: 70%; text-align: center; color: #f6efd9; font-size: 19px; font-weight: 600; font-style: italic; background: rgba(15,25,15,0.4); padding: 6px 22px; border-radius: 22px; border: 1px solid rgba(240,194,67,0.3); white-space: nowrap; z-index: 5;">{{ message }}</div>
+
+      <!-- Draw pile -->
+      <div data-screen-label="Zugstapel" onClick="{{ drawClick }}" style="position: absolute; left: calc(50% - {{ pileGap }}px); top: {{ pileTop }}px; width: {{ cardW }}px; height: {{ cardH }}px; transform: translate(-50%, -50%); cursor: {{ drawCursor }};" style-hover="filter: brightness(1.12);">
+        <div style="position: absolute; inset: 0; border: 2px dashed rgba(240,194,67,0.4); border-radius: 10px;"></div>
+        <sc-for list="{{ pileStack }}" as="p" hint-placeholder-count="0">
+          <div style="position: absolute; left: {{ p.x }}px; top: {{ p.y }}px; width: {{ cardW }}px; aspect-ratio: 2 / 3; background-image: url({{ backUri }}); background-size: 100% 100%; border-radius: 10px; box-shadow: 0 3px 8px rgba(0,0,0,0.45);"></div>
+        </sc-for>
+        <div style="position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); color: rgba(243,234,210,0.75); font-size: 14px; font-weight: 600; white-space: nowrap;">Zieh: {{ drawCount }}</div>
+      </div>
+
+      <!-- Discard pile -->
+      <div data-screen-label="Ablagestapel" style="position: absolute; left: calc(50% + 5px); top: {{ pileTop }}px; width: 0; height: 0;">
+        <sc-for list="{{ discards }}" as="d" hint-placeholder-count="0">
+          <div style="position: absolute; left: 0; top: 0; width: {{ cardW }}px; aspect-ratio: 2 / 3; background-image: url({{ d.uri }}); background-size: 100% 100%; transform: translate(-50%, -50%) rotate({{ d.rot }}deg); border-radius: 10px; box-shadow: 0 5px 14px rgba(0,0,0,0.5); animation: slap 0.25s backwards;"></div>
+        </sc-for>
+      </div>
+
+      <!-- Wish chip -->
+      <sc-if value="{{ showWishChip }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; left: calc(50% + {{ chipLeft }}px); top: {{ pileTop }}px; transform: translateY(-50%); display: flex; align-items: center; gap: 8px; background: rgba(243,234,210,0.95); border: 2px solid #b8923a; border-radius: 14px; padding: 8px 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); animation: popIn 0.25s;">
+          <div style="width: 34px; height: 34px; background-image: url({{ wishUri }}); background-size: contain; background-repeat: no-repeat;"></div>
+          <div style="font-size: 16px; font-weight: 700; color: #4a3416;">Wunsch:<br>{{ wishName }}</div>
+        </div>
+      </sc-if>
+
+      <!-- Tschau button -->
+      <sc-if value="{{ showTschau }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ sayTschau }}" style="position: absolute; right: 44px; bottom: {{ tschauBottom }}px; width: 110px; height: 110px; border-radius: 50%; border: 4px solid #f0c243; background: radial-gradient(circle at 35% 30%, #c23b32, #7c1f26); color: #f6efd9; font-family: inherit; font-size: 26px; font-weight: 900; cursor: pointer; animation: pulseBtn 1.1s infinite; z-index: 20;">Tschau!</button>
+      </sc-if>
+
+      <!-- Hint button -->
+      <sc-if value="{{ showHint }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ hintClick }}" style="position: absolute; left: 44px; bottom: {{ tschauBottom }}px; font-family: inherit; font-size: 17px; font-weight: 800; color: #2b3a55; background: linear-gradient(180deg, #dce8f6, #b9cde6); border: 2px solid #5a7ba6; border-radius: 24px; padding: 10px 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.4); z-index: 20;" style-hover="filter: brightness(1.08); transform: translateY(-2px);">Tipp?</button>
+      </sc-if>
+
+      <!-- Tip toast -->
+      <sc-if value="{{ showTip }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; left: 50%; bottom: {{ tipBottom }}px; transform: translateX(-50%); max-width: 62%; display: flex; align-items: center; gap: 12px; background: #f3ead2; border: 2px solid #5a7ba6; border-radius: 14px; padding: 10px 18px; box-shadow: 0 8px 22px rgba(0,0,0,0.45); z-index: 25; animation: popIn 0.3s;">
+          <span style="flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #5a7ba6; color: #f3ead2; font-weight: 900; font-size: 19px; display: flex; align-items: center; justify-content: center;">!</span>
+          <span style="font-size: 16px; color: #2b3a55; line-height: 1.35;"><b>Nöd optimal.</b> {{ tipText }}</span>
+        </div>
+      </sc-if>
+
+      <!-- Passe button -->
+      <sc-if value="{{ showPasse }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ passTurn }}" style="position: absolute; left: calc(50% - {{ pileGap }}px); top: {{ passeTop }}px; transform: translateX(-50%); font-family: inherit; font-size: 17px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 2px solid #3a2512; border-radius: 10px; padding: 8px 22px; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.4); z-index: 20;" style-hover="filter: brightness(1.15);">Passe</button>
+      </sc-if>
+
+      <!-- Player hand -->
+      <div data-screen-label="Dini Charte" style="position: absolute; left: 0; right: 0; bottom: 14px; height: {{ handH }}px;">
+        <sc-for list="{{ playerCards }}" as="c" hint-placeholder-count="0">
+          <div onClick="{{ c.play }}" style="position: absolute; left: 50%; bottom: 0; width: {{ cardW }}px; aspect-ratio: 2 / 3; background-image: url({{ c.uri }}); background-size: 100% 100%; transform-origin: 50% 100%; transform: {{ c.tf }}; transition: transform 0.22s, box-shadow 0.22s, opacity 0.22s; z-index: {{ c.z }}; border-radius: 10px; box-shadow: {{ c.shadow }}; opacity: {{ c.dim }}; cursor: {{ c.cursor }}; animation: dealDown 0.45s {{ c.delay }} backwards;" style-hover="transform: {{ c.htf }};"></div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <!-- ================= MENU ================= -->
+    <sc-if value="{{ isMenu }}" hint-placeholder-val="{{ true }}">
+      <div data-screen-label="Startmenu" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15,20,12,0.35); z-index: 50;">
+        <div style="background: linear-gradient(180deg, #f6efdc, #ede1c2); border: 3px solid #b8923a; box-shadow: 0 0 0 6px #3a2818, 0 20px 50px rgba(0,0,0,0.6); border-radius: 20px; padding: 40px 56px; text-align: center; max-width: 560px; animation: popIn 0.35s;">
+          <div style="font-size: 56px; font-weight: 900; color: #7c1f26; letter-spacing: 1px; line-height: 1;">Tschau Sepp</div>
+          <div style="font-size: 19px; font-style: italic; color: #6b5636; margin-top: 8px;">S'klassische Schwiizer Chartespiel — mit ächte Jasscharte</div>
+          <div style="display: flex; justify-content: center; gap: 22px; margin: 26px 0 30px;">
+            <sc-for list="{{ menuSuits }}" as="m" hint-placeholder-count="0">
+              <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <div style="width: 52px; height: 52px; background-image: url({{ m.uri }}); background-size: contain; background-repeat: no-repeat;"></div>
+                <div style="font-size: 14px; font-weight: 700; color: #4a3416;">{{ m.name }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font-size: 18px; font-weight: 700; color: #4a3416; margin-bottom: 14px;">Wähl d Schwirigkeit:</div>
+          <div style="display: flex; gap: 16px; justify-content: center;">
+            <button onClick="{{ startEasy }}" style="flex: 1; font-family: inherit; font-size: 20px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 12px; padding: 14px 26px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Gmüetlich<br><span style="font-size: 14px; font-weight: 400; font-style: italic;">für gmüetlichi Sepp</span></button>
+            <button onClick="{{ startSmart }}" style="flex: 1; font-family: inherit; font-size: 20px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #c23b32, #7c1f26); border: 2px solid #4a1010; border-radius: 12px; padding: 14px 26px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Gwieft<br><span style="font-size: 14px; font-weight: 400; font-style: italic;">für gwiefti Füchs</span></button>
+          </div>
+          <div style="margin-top: 22px; font-size: 14px; color: #8a7350; font-style: italic;">Tipp: Bi dr letschte Charte nöd vergässe «Tschau!» z'säge…</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= WISH MODAL ================= -->
+    <sc-if value="{{ showWish }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Farbwunsch" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15,20,12,0.45); z-index: 60;">
+        <div style="background: linear-gradient(180deg, #f6efdc, #ede1c2); border: 3px solid #b8923a; box-shadow: 0 0 0 6px #3a2818, 0 20px 50px rgba(0,0,0,0.6); border-radius: 20px; padding: 30px 40px; text-align: center; animation: popIn 0.3s;">
+          <div style="font-size: 28px; font-weight: 900; color: #7c1f26;">Under gspielt!</div>
+          <div style="font-size: 18px; color: #4a3416; margin: 6px 0 20px;">Wünsch dir e Farb:</div>
+          <div style="display: flex; gap: 16px;">
+            <sc-for list="{{ wishOptions }}" as="w" hint-placeholder-count="0">
+              <button onClick="{{ w.pick }}" style="display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: inherit; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 14px; padding: 16px 20px; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.2);" style-hover="transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.3); border-color: #7c1f26;">
+                <div style="width: 58px; height: 58px; background-image: url({{ w.uri }}); background-size: contain; background-repeat: no-repeat;"></div>
+                <span style="font-size: 16px; font-weight: 700; color: #4a3416;">{{ w.name }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= ROUND END ================= -->
+    <sc-if value="{{ showRoundEnd }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Rundenendi" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15,20,12,0.5); z-index: 60;">
+        <div style="background: linear-gradient(180deg, #f6efdc, #ede1c2); border: 3px solid #b8923a; box-shadow: 0 0 0 6px #3a2818, 0 20px 50px rgba(0,0,0,0.6); border-radius: 20px; padding: 38px 54px; text-align: center; max-width: 480px; animation: popIn 0.35s;">
+          <div style="font-size: 40px; font-weight: 900; color: {{ roundEndColor }}; line-height: 1.15;">{{ roundEndTitle }}</div>
+          <div style="font-size: 22px; font-weight: 700; color: #4a3416; margin-top: 14px;">{{ roundEndPts }}</div>
+          <div style="font-size: 17px; color: #6b5636; margin-top: 6px;">{{ roundEndScore }}</div>
+          <div style="display: flex; gap: 14px; justify-content: center; margin-top: 26px;">
+            <button onClick="{{ nextRoundClick }}" style="font-family: inherit; font-size: 19px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 12px; padding: 12px 30px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12);">Nöchsti Rundä</button>
+            <button onClick="{{ toMenu }}" style="font-family: inherit; font-size: 19px; font-weight: 700; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 12px; padding: 12px 30px; cursor: pointer;" style-hover="filter: brightness(0.95);">Neus Spiel</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ================= RULES ================= -->
+    <sc-if value="{{ showRules }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Regle" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15,20,12,0.5); z-index: 70;">
+        <div style="background: linear-gradient(180deg, #f6efdc, #ede1c2); border: 3px solid #b8923a; box-shadow: 0 0 0 6px #3a2818, 0 20px 50px rgba(0,0,0,0.6); border-radius: 20px; padding: 34px 44px; max-width: 620px; animation: popIn 0.3s;">
+          <div style="font-size: 32px; font-weight: 900; color: #7c1f26; text-align: center;">So gohts: Tschau Sepp</div>
+          <div style="font-size: 17px; color: #3d3018; line-height: 1.65; margin-top: 16px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">♦</span><span>Spiel e Charte mit <b>glicher Farb</b> oder <b>glichem Wärt</b> wie di oberschti Charte. Susch muesch <b>ei Charte zieh</b> — wenn die passt, dörfsch se grad spiele.</span></div>
+            <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">7</span><span>Dr Gägner muess <b>2 Charte zieh</b> — oder er <b>stackt</b> sälber e Siebni druf: denn sinds 4, 6, 8 Charte…</span></div>
+            <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">8</span><span>Dr Gägner wird <b>übersprunge</b> — du dörfsch grad nomol. Mit ere Achti chasch <b>nöd fertig mache</b>: du muesch nomol — und wenns nöd goht, zieh.</span></div>
+            <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">U</span><span>Dr <b>Under</b> isch dr Joker — dörf immer gspielt wärde, und du <b>wünschisch dir e Farb</b>.</span></div>
+            <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">A</span><span>S'<b>Ass</b> muess <b>«deckt»</b> wärde: grad no en Ass oder e Charte vo dr <b>gliche Farb</b> obedruf. Chasch nöd decke, muesch <b>zieh, bis es goht</b>. Mit eme blutte Ass chasch nöd fertig mache.</span></div>
+            <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">!</span><span>Bi dr <b>letschte Charte</b> muesch vorhär <b>«Tschau!»</b> säge (Chnopf drucke) — susch gits 2 Strofcharte. Mit dr letschte Charte heissts denn <b>«Sepp!»</b>.</span></div>
+            <div style="display: flex; gap: 10px;"><span style="font-weight: 900; color: #b8923a;">★</span><span>Wär gwünnt, überchunnt d Pünkt vo de Gägnercharte: <b>Ass 11 · Banner 10 · Künig 4 · Ober 3 · Under 2</b>.</span></div>
+          </div>
+          <div style="text-align: center; margin-top: 22px;">
+            <button onClick="{{ closeRules }}" style="font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 2px solid #3a2512; border-radius: 12px; padding: 10px 34px; cursor: pointer;" style-hover="filter: brightness(1.12);">Verstande!</button>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tischfarbe&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#31694a&quot;, &quot;options&quot;: [&quot;#31694a&quot;, &quot;#27516b&quot;, &quot;#6d2a33&quot;, &quot;#3d3d52&quot;], &quot;section&quot;: &quot;Tisch&quot;}, &quot;kartegroessi&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;min&quot;: 0.8, &quot;max&quot;: 1.3, &quot;step&quot;: 0.05, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Charte&quot;}, &quot;startcharte&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;5&quot;, &quot;options&quot;: [&quot;5&quot;, &quot;7&quot;], &quot;section&quot;: &quot;Charte&quot;}}">
+class Component extends DCLogic {
+  state = {
+    phase: 'menu', // menu | play | wish | roundEnd
+    difficulty: 'gwieft',
+    player: [], bot: [], pile: [], discard: [],
+    turn: 'du', wish: null,
+    message: '', bubble: null,
+    saidDu: false, saidComp: false,
+    hasDrawn: false, drawnId: null, cover: null, pending7: 0,
+    scores: { du: 0, comp: 0 }, rounds: { du: 0, comp: 0 }, roundNum: 1,
+    sound: true, rules: false, tip: null, hintId: null,
+    roundEnd: null, starter: 'du',
+  };
+  tk = 0;
+  caches = {};
+
+  // ---------- Deck ----------
+  shuffleArr(a) {
+    a = a.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  buildDeck() {
+    const d = []; let id = 0;
+    for (const s of ['rose', 'schilte', 'eichle', 'schaelle'])
+      for (const r of ['6', '7', '8', '9', 'B', 'U', 'O', 'K', 'A'])
+        d.push({ id: id++, suit: s, rank: r });
+    return this.shuffleArr(d);
+  }
+  suitName(s) { return { rose: 'Rose', schilte: 'Schilte', eichle: 'Eichle', schaelle: 'Schälle' }[s]; }
+  rankName(r) { return { '6': 'Sächsi', '7': 'Siebni', '8': 'Achti', '9': 'Nüni', 'B': 'Banner', 'U': 'Under', 'O': 'Ober', 'K': 'Künig', 'A': 'Ass' }[r]; }
+  cardName(c) { return 'dr ' + this.suitName(c.suit) + '-' + this.rankName(c.rank); }
+  pointsOf(hand) { const P = { A: 11, B: 10, K: 4, O: 3, U: 2 }; return hand.reduce((a, c) => a + (P[c.rank] || 0), 0); }
+
+  // ---------- Suit artwork (100x100 viewBox fragments) ----------
+  suitArt(suit) {
+    if (this.caches['art_' + suit]) return this.caches['art_' + suit];
+    let g = '';
+    if (suit === 'rose') {
+      let petals = '';
+      for (let i = 0; i < 8; i++) petals += '<ellipse cx="50" cy="23" rx="12.5" ry="19" fill="url(#rg)" transform="rotate(' + (i * 45 + 22.5) + ' 50 50)"/>';
+      g = '<defs><radialGradient id="rg" cx="50%" cy="30%" r="80%"><stop offset="0%" stop-color="#e0524a"/><stop offset="100%" stop-color="#9c141d"/></radialGradient></defs>' +
+        '<g stroke="#5f0d12" stroke-width="2.5" stroke-linejoin="round">' + petals +
+        '<circle cx="50" cy="50" r="15" fill="#f0c243"/><circle cx="50" cy="50" r="6.5" fill="#9c141d"/></g>';
+    } else if (suit === 'schilte') {
+      const SH = 'M50 6 C62 12 76 14 90 11 L90 52 C90 75 72 90 50 97 C28 90 10 75 10 52 L10 11 C24 14 38 12 50 6 Z';
+      g = '<defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#42424a"/><stop offset="1" stop-color="#131316"/></linearGradient><clipPath id="sc"><path d="' + SH + '"/></clipPath></defs>' +
+        '<path d="' + SH + '" fill="url(#sg)"/>' +
+        '<g clip-path="url(#sc)"><rect x="0" y="0" width="100" height="34" fill="#c22a2a"/><rect x="0" y="34" width="100" height="4" fill="#e8b83c"/></g>' +
+        '<path d="' + SH + '" fill="none" stroke="#0c0c0e" stroke-width="3.5" stroke-linejoin="round"/>';
+    } else if (suit === 'eichle') {
+      g = '<defs><linearGradient id="eg" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#e3c14f"/><stop offset="0.5" stop-color="#bb8d26"/><stop offset="1" stop-color="#7d5a14"/></linearGradient></defs>' +
+        '<path d="M47 12 Q49 4 57 5 Q53 10 54 17 Z" fill="#4a3410"/>' +
+        '<path d="M30 44 Q50 56 70 44 C70 68 62 85 50 91 C38 85 30 68 30 44 Z" fill="url(#eg)" stroke="#4a3410" stroke-width="2.5"/>' +
+        '<path d="M38 54 Q40 71 46 80" stroke="#f4e09a" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>' +
+        '<path d="M24 43 Q50 13 76 43 Q64 52 50 52 Q36 52 24 43 Z" fill="#6d4a16" stroke="#3c290b" stroke-width="2.5" stroke-linejoin="round"/>' +
+        '<path d="M31 37 L42 45 M40 31 L53 41 M50 27 L63 37 M60 30 L70 39" stroke="#3c290b" stroke-width="1.6"/>';
+    } else {
+      g = '<defs><radialGradient id="bg" cx="38%" cy="30%" r="80%"><stop offset="0" stop-color="#f8de74"/><stop offset="0.6" stop-color="#d9a92c"/><stop offset="1" stop-color="#8a660f"/></radialGradient></defs>' +
+        '<path d="M50 3 C57 3 61 8 61 13 C61 18 57 22 50 22 C43 22 39 18 39 13 C39 8 43 3 50 3 Z" fill="none" stroke="#6b4e0c" stroke-width="5"/>' +
+        '<circle cx="50" cy="58" r="37" fill="url(#bg)" stroke="#6b4e0c" stroke-width="2.5"/>' +
+        '<circle cx="40" cy="47" r="4" fill="#6b4e0c"/><circle cx="60" cy="47" r="4" fill="#6b4e0c"/>' +
+        '<path d="M16 61 Q50 74 84 61" stroke="#6b4e0c" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+        '<circle cx="50" cy="66" r="6.5" fill="#6b4e0c"/>';
+    }
+    this.caches['art_' + suit] = g;
+    return g;
+  }
+  svgUri(w, h, inner) {
+    const e = encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + w + ' ' + h + '">' + inner + '</svg>')
+      .replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/'/g, '%27');
+    return 'data:image/svg+xml,' + e; // kei Semikolon — dr Inline-Style-Parser trennt bi ';'
+  }
+  suitUri(suit) {
+    const k = 'suit_' + suit;
+    if (!this.caches[k]) this.caches[k] = this.svgUri(100, 100, this.suitArt(suit));
+    return this.caches[k];
+  }
+  sym(suit, x, y, s) {
+    return '<g transform="translate(' + (x - s / 2) + ' ' + (y - s / 2) + ') scale(' + (s / 100) + ')">' + this.suitArt(suit) + '</g>';
+  }
+
+  // ---------- Card faces ----------
+  face(card) {
+    const k = 'face_' + card.suit + card.rank;
+    if (this.caches[k]) return this.caches[k];
+    const col = { rose: '#9c141d', schilte: '#17171a', eichle: '#5d431a', schaelle: '#8a6710' }[card.suit];
+    const lbl = { B: '10', U: 'U', O: 'O', K: 'K', A: 'A' }[card.rank] || card.rank;
+    let s = '<rect x="4" y="4" width="232" height="352" rx="18" fill="#f7f0dc" stroke="#2a2118" stroke-width="3"/>' +
+      '<rect x="13" y="13" width="214" height="334" rx="12" fill="none" stroke="#c8a14b" stroke-width="2"/>';
+    const corner = '<text x="31" y="47" font-size="36" font-weight="700" font-family="Vollkorn, Georgia, serif" text-anchor="middle" fill="' + col + '">' + lbl + '</text>' + this.sym(card.suit, 31, 73, 27);
+    s += '<g>' + corner + '</g><g transform="rotate(180 120 180)">' + corner + '</g>';
+    const PIPS = {
+      '6': [[80, 104], [160, 104], [80, 180], [160, 180], [80, 256], [160, 256]],
+      '7': [[80, 104], [160, 104], [80, 180], [160, 180], [80, 256], [160, 256], [120, 142]],
+      '8': [[80, 98], [160, 98], [80, 153], [160, 153], [80, 208], [160, 208], [80, 263], [160, 263]],
+      '9': [[80, 98], [160, 98], [80, 153], [160, 153], [80, 208], [160, 208], [80, 263], [160, 263], [120, 180]],
+    };
+    if (PIPS[card.rank]) {
+      for (const [x, y] of PIPS[card.rank]) s += this.sym(card.suit, x, y, 44);
+    } else if (card.rank === 'B') {
+      s += '<rect x="112" y="76" width="7" height="212" rx="3" fill="#7d5a2a" stroke="#4a3410" stroke-width="1.5"/>' +
+        '<circle cx="115.5" cy="72" r="7" fill="#c8a14b" stroke="#4a3410" stroke-width="1.5"/>' +
+        '<path d="M121 84 H196 L182 136 L196 188 H121 Z" fill="#c22a2a" stroke="#4a1010" stroke-width="2.5" stroke-linejoin="round"/>' +
+        this.sym(card.suit, 152, 136, 46) +
+        '<text x="120" y="322" font-size="24" font-style="italic" font-weight="600" font-family="Vollkorn, Georgia, serif" text-anchor="middle" fill="' + col + '">Banner</text>';
+    } else if (card.rank === 'U' || card.rank === 'O' || card.rank === 'K') {
+      const name = { U: 'UNDER', O: 'OBER', K: 'KÜNIG' }[card.rank];
+      s += '<circle cx="120" cy="150" r="60" fill="#fdf8ea" stroke="#c8a14b" stroke-width="3"/>' +
+        '<circle cx="120" cy="150" r="52" fill="none" stroke="' + col + '" stroke-width="1.5"/>' +
+        this.sym(card.suit, 120, 150, 68);
+      if (card.rank === 'K') s += '<path d="M96 84 L102 70 L111 80 L120 66 L129 80 L138 70 L144 84 Z" fill="#f0c243" stroke="#8a6710" stroke-width="2" stroke-linejoin="round"/>';
+      s += '<rect x="54" y="242" width="132" height="42" rx="6" fill="#8f1e26" stroke="#4a1010" stroke-width="2"/>' +
+        '<text x="120" y="272" font-size="26" font-weight="700" letter-spacing="3" font-family="Vollkorn, Georgia, serif" text-anchor="middle" fill="#f7f0dc">' + name + '</text>';
+    } else {
+      s += '<path d="M120 56 L200 168 L120 280 L40 168 Z" fill="none" stroke="#c8a14b" stroke-width="2"/>' +
+        '<path d="M120 70 L190 168 L120 266 L50 168 Z" fill="none" stroke="' + col + '" stroke-width="1" opacity="0.5"/>' +
+        this.sym(card.suit, 120, 168, 116);
+    }
+    this.caches[k] = this.svgUri(240, 360, s);
+    return this.caches[k];
+  }
+  backUri() {
+    if (this.caches.back) return this.caches.back;
+    const s = '<defs><pattern id="p" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="18" height="18" fill="#7c1f26"/><rect width="9" height="18" fill="#8d2830"/><rect y="8" width="18" height="2" fill="#6b1a20"/></pattern></defs>' +
+      '<rect x="4" y="4" width="232" height="352" rx="18" fill="url(#p)" stroke="#2a2118" stroke-width="3"/>' +
+      '<rect x="14" y="14" width="212" height="332" rx="10" fill="none" stroke="#d9b23a" stroke-width="2"/>' +
+      '<path d="M120 110 L172 180 L120 250 L68 180 Z" fill="#6b1a20" stroke="#d9b23a" stroke-width="2"/>' +
+      '<text x="120" y="196" font-size="44" font-weight="900" font-family="Vollkorn, Georgia, serif" text-anchor="middle" fill="#f0c243">TS</text>';
+    this.caches.back = this.svgUri(240, 360, s);
+    return this.caches.back;
+  }
+
+  // ---------- Sound ----------
+  beep(freq, dur, type, vol, when) {
+    try {
+      const c = this.ac || (this.ac = new (window.AudioContext || window.webkitAudioContext)());
+      const t = c.currentTime + (when || 0);
+      const o = c.createOscillator(), g = c.createGain();
+      o.type = type || 'triangle'; o.frequency.value = freq;
+      o.connect(g); g.connect(c.destination);
+      g.gain.setValueAtTime(vol || 0.12, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+      o.start(t); o.stop(t + dur);
+    } catch (e) { }
+  }
+  snd(name) {
+    if (!this.state.sound) return;
+    if (name === 'play') { this.beep(300, 0.05, 'square', 0.06); this.beep(190, 0.08, 'triangle', 0.1, 0.02); }
+    else if (name === 'draw') { this.beep(150, 0.09, 'triangle', 0.09); this.beep(200, 0.07, 'triangle', 0.07, 0.06); }
+    else if (name === 'deal') { for (let i = 0; i < 5; i++) this.beep(170 + i * 22, 0.06, 'triangle', 0.06, i * 0.09); }
+    else if (name === 'tschau') { this.beep(880, 0.14, 'triangle', 0.12); this.beep(1174, 0.2, 'triangle', 0.1, 0.11); }
+    else if (name === 'win') { [523, 659, 784, 1047].forEach((f, i) => this.beep(f, 0.28, 'triangle', 0.12, i * 0.13)); }
+    else if (name === 'lose') { this.beep(220, 0.3, 'sawtooth', 0.06); this.beep(155, 0.45, 'sawtooth', 0.06, 0.18); }
+    else if (name === 'penalty') { this.beep(140, 0.3, 'sawtooth', 0.08); }
+    else if (name === 'deny') { this.beep(120, 0.08, 'square', 0.05); }
+  }
+
+  // ---------- Flow ----------
+  after(ms, fn) { const tk = this.tk; setTimeout(() => { if (tk === this.tk && this.mounted !== false) fn(); }, ms); }
+  componentDidMount() { this.onR = () => this.forceUpdate(); window.addEventListener('resize', this.onR); }
+  componentWillUnmount() { this.mounted = false; this.tk++; window.removeEventListener('resize', this.onR); }
+
+  start(diff) {
+    this.setState({ difficulty: diff, scores: { du: 0, comp: 0 }, rounds: { du: 0, comp: 0 }, roundNum: 1, starter: 'du' }, () => this.startRound());
+  }
+  startRound() {
+    this.tk++;
+    const pile = this.buildDeck();
+    const n = parseInt(this.props.startcharte ?? '5', 10) || 5;
+    const player = [], bot = [];
+    for (let i = 0; i < n; i++) { player.push(pile.pop()); bot.push(pile.pop()); }
+    // erschti Charte dörf kei Spezialcharte sii (7, 8, Under, Ass)
+    let flip = pile.pop();
+    while (['7', '8', 'U', 'A'].includes(flip.rank)) {
+      pile.unshift(flip); // zrugg under de Stapel
+      flip = pile.pop();
+    }
+    const discard = [flip];
+    const first = this.state.starter;
+    this.setState({
+      phase: 'play', player, bot, pile, discard, turn: first, wish: null, cover: null, pending7: 0,
+      saidDu: false, saidComp: false, hasDrawn: false, drawnId: null,
+      bubble: null, roundEnd: null, rules: false,
+      message: first === 'du' ? 'Du bisch dra.' : 'Dr Computer fot a…',
+    });
+    this.snd('deal');
+    if (first === 'comp') this.after(1400, () => this.botTurn());
+  }
+  toMenu() { this.tk++; this.setState({ phase: 'menu', bubble: null, rules: false }); }
+
+  canPlay(c, s) {
+    s = s || this.state;
+    const t = s.discard[s.discard.length - 1];
+    if (!t) return false;
+    if (s.pending7 > 0) return c.rank === '7'; // nur stacke oder zieh
+    if (s.cover) return c.rank === 'A' || c.rank === 'U' || c.suit === t.suit; // Ass decke
+    if (c.rank === 'U') return true; // Under = Joker
+    if (s.wish) return c.suit === s.wish;
+    if (t.rank === 'U') return true; // Under vom Aateil — frei
+    return c.suit === t.suit || c.rank === t.rank;
+  }
+
+  drawUntilCover(who) {
+    const s = this.state;
+    let pile = s.pile.slice(), discard = s.discard.slice();
+    const hand = (who === 'du' ? s.player : s.bot).slice();
+    const t = discard[discard.length - 1];
+    const covers = c => c.rank === 'A' || c.rank === 'U' || c.suit === t.suit;
+    let found = null, n = 0;
+    while (!found) {
+      if (!pile.length) {
+        if (discard.length > 1) { const top = discard.pop(); pile = this.shuffleArr(discard); discard = [top]; }
+        else break;
+      }
+      const c = pile.pop(); hand.push(c); n++;
+      if (covers(c)) found = c;
+    }
+    const patch = { pile, discard };
+    if (who === 'du') { patch.player = hand; if (hand.length !== 1) patch.saidDu = false; }
+    else { patch.bot = hand; if (hand.length !== 1) patch.saidComp = false; }
+    this.setState(patch);
+    return { found, n };
+  }
+
+  drawCards(who, n) {
+    const s = this.state;
+    let pile = s.pile.slice(), discard = s.discard.slice();
+    const hand = (who === 'du' ? s.player : s.bot).slice();
+    const got = [];
+    for (let i = 0; i < n; i++) {
+      if (!pile.length) {
+        if (discard.length > 1) { const top = discard.pop(); pile = this.shuffleArr(discard); discard = [top]; }
+        else break;
+      }
+      const c = pile.pop(); hand.push(c); got.push(c);
+    }
+    const patch = { pile, discard };
+    if (who === 'du') { patch.player = hand; if (hand.length !== 1) patch.saidDu = false; }
+    else { patch.bot = hand; if (hand.length !== 1) patch.saidComp = false; }
+    this.setState(patch);
+    return got;
+  }
+
+  tryPlay(id) {
+    const s = this.state;
+    if (s.phase !== 'play' || s.turn !== 'du') return;
+    const c = s.player.find(x => x.id === id);
+    if (!c) return;
+    if (!this.canPlay(c)) { this.snd('deny'); return; }
+    // Coaching: mit em beschte Zug vergliiche
+    let tip = null;
+    const adv = this.advise();
+    if (adv.card && adv.card.id !== c.id && adv.score - this.scoreCard(c, s.player, s) >= 18) {
+      tip = this.reasonFor(c, adv.card, s);
+    }
+    this.playCard('du', c);
+    if (tip) {
+      this.setState({ tip });
+      this.after(7000, () => this.setState({ tip: null }));
+    }
+  }
+
+  playCard(who, c) {
+    const s = this.state;
+    const hand = (who === 'du' ? s.player : s.bot).filter(x => x.id !== c.id);
+    const patch = { discard: s.discard.concat([c]), hasDrawn: false, drawnId: null, cover: null, hintId: null };
+    patch[who === 'du' ? 'player' : 'bot'] = hand;
+    if (c.rank !== 'U') patch.wish = null;
+    this.snd('play');
+
+    // bot announces Tschau
+    if (who === 'comp' && hand.length === 1) {
+      const forgets = s.difficulty === 'gmuetlich' && Math.random() < 0.3;
+      if (!forgets) {
+        patch.saidComp = true;
+        this.after(450, () => { this.setState({ bubble: 'Tschau!' }); this.snd('tschau'); this.after(1700, () => this.setState({ bubble: null })); });
+      }
+    }
+
+    // Ass: muess deckt wärde
+    if (c.rank === 'A') {
+      if (hand.length === 0) {
+        patch.message = who === 'du' ? 'Mit eme blutte Ass chasch nöd fertig mache — zieh zum Decke!' : 'Dr Computer cha mit em Ass nöd fertig mache — er zieht.';
+        this.setState(patch);
+        this.snd('penalty');
+        this.after(900, () => {
+          const r = this.drawUntilCover(who); this.snd('draw');
+          this.after(300, () => {
+            this.setState({ cover: who, turn: who, message: who === 'du' ? ('Du hesch ' + r.n + ' Charte zoge — jetzt deck s Ass!') : ('Dr Computer zieht ' + r.n + ' Charte und deckt.') });
+            if (who === 'comp') this.after(1000, () => this.botTurn());
+          });
+        });
+        return;
+      }
+      patch.cover = who;
+      patch.message = who === 'du' ? 'Ass! Du muesch decke: no en Ass, glichi Farb oder en Under — susch zieh, bis es goht.' : 'Ass! Dr Computer muess decke.';
+      this.setState(patch);
+      if (who === 'comp') this.after(1100, () => this.botTurn());
+      return;
+    }
+
+    // 8 als letschti Charte: strengi Variante — du muesch nomol, also zieh
+    if (c.rank === '8' && hand.length === 0) {
+      patch.message = who === 'du' ? 'Mit ere Achti chasch nöd fertig mache — du bisch nomol dra und muesch zieh!' : 'Dr Computer cha mit dr Achti nöd fertig mache — er zieht.';
+      this.setState(patch);
+      this.snd('penalty');
+      this.after(900, () => {
+        this.drawCards(who, 1); this.snd('draw');
+        this.after(400, () => {
+          this.setState({ turn: who, message: who === 'du' ? 'Du bisch nomol dra.' : 'Dr Computer isch nomol dra.', hasDrawn: false, drawnId: null });
+          if (who === 'comp') this.after(1000, () => this.botTurn());
+        });
+      });
+      return;
+    }
+
+    // last card: win or penalty
+    if (hand.length === 0) {
+      const said = who === 'du' ? s.saidDu : s.saidComp;
+      if (said) {
+        if (who === 'comp') patch.bubble = 'Sepp!';
+        patch.message = who === 'du' ? 'SEPP!' : '';
+        this.setState(patch);
+        this.after(600, () => this.endRound(who));
+        return;
+      }
+      patch.message = who === 'du' ? '«Tschau» vergässe! 2 Strofcharte für di.' : 'Dr Computer het «Tschau» vergässe — 2 Strofcharte!';
+      this.setState(patch);
+      this.snd('penalty');
+      this.after(700, () => { this.drawCards(who, 2); this.after(700, () => this.nextTurn(who, c, true)); });
+      return;
+    }
+
+    // Under: Joker — wish
+    if (c.rank === 'U') {
+      if (who === 'du') { patch.phase = 'wish'; patch.message = 'Wünsch dir e Farb!'; this.setState(patch); return; }
+      const w = this.botWish(hand);
+      patch.wish = w;
+      patch.message = 'Dr Computer wünscht sich ' + this.suitName(w) + '.';
+    }
+
+    // 7: +2 zum Zieh — cha gstackt wärde
+    if (c.rank === '7') {
+      patch.pending7 = s.pending7 + 2;
+    }
+
+    this.setState(patch);
+    this.after(200, () => this.nextTurn(who, c));
+  }
+
+  nextTurn(who, c, forced) {
+    if (this.state.phase !== 'play') return;
+    const again = !forced && c.rank === '8';
+    const nxt = again ? who : (who === 'du' ? 'comp' : 'du');
+    let msg;
+    if (again) msg = who === 'du' ? 'Achti! Du dörfsch grad nomol.' : 'Achti! Dr Computer dörf nomol.';
+    else if (this.state.pending7 > 0) msg = nxt === 'du' ? 'Siebni! Zieh ' + this.state.pending7 + ' Charte — oder stack sälber e Siebni!' : 'Siebni! Dr Computer muess ' + this.state.pending7 + ' Charte zieh — oder stacke.';
+    else if (nxt === 'du') msg = this.state.wish ? 'Du bisch dra — Wunsch: ' + this.suitName(this.state.wish) + '.' : 'Du bisch dra.';
+    else msg = 'Dr Computer studiert…';
+    this.setState({ turn: nxt, message: msg, hasDrawn: false, drawnId: null, cover: null, hintId: null });
+    if (nxt === 'comp') this.after(900 + Math.random() * 800, () => this.botTurn());
+  }
+
+  pickWish(suit) {
+    if (this.state.phase !== 'wish') return;
+    this.snd('tschau');
+    this.setState({ phase: 'play', wish: suit, message: 'Du wünschisch dir ' + this.suitName(suit) + '.' });
+    this.after(800, () => this.nextTurn('du', { rank: 'O_done' }));
+  }
+
+  sayTschau() {
+    if (this.state.phase === 'play' && this.state.player.length === 1 && !this.state.saidDu) {
+      this.setState({ saidDu: true, message: 'Tschau!' });
+      this.snd('tschau');
+    }
+  }
+
+  drawClick() {
+    const s = this.state;
+    if (s.phase !== 'play' || s.turn !== 'du' || s.hasDrawn) return;
+    if (s.cover === 'du') {
+      // strengi Variante: zieh, bis du decke chasch
+      const r = this.drawUntilCover('du');
+      this.snd('draw');
+      if (r.found) this.setState({ hasDrawn: true, message: r.n + (r.n === 1 ? ' Charte' : ' Charte') + ' zoge — jetzt deck s Ass!' });
+      else { this.setState({ message: 'Kei Charte meh zum Zieh — s Ass blibt blutt.' }); this.after(900, () => this.nextTurn('du', { rank: 'x' })); }
+      return;
+    }
+    const n = Math.max(1, s.pending7);
+    const got = this.drawCards('du', n);
+    this.snd('draw');
+    if (s.pending7 > 0) this.setState({ pending7: 0 });
+    if (!got.length) { this.setState({ message: 'Kei Charte meh zum Zieh!' }); this.after(700, () => this.nextTurn('du', { rank: 'x' })); return; }
+    this.after(60, () => {
+      const anyPlayable = this.state.player.some(c => this.canPlay(c));
+      if (anyPlayable) this.setState({ hasDrawn: true, message: 'Du chasch e passendi Charte spiele — oder passe.' });
+      else { this.setState({ hasDrawn: true, message: 'Nüt Spielbars…' }); this.after(1000, () => this.nextTurn('du', { rank: 'x' })); }
+    });
+  }
+  passTurn() {
+    if (this.state.phase === 'play' && this.state.turn === 'du' && this.state.hasDrawn) this.nextTurn('du', { rank: 'x' });
+  }
+
+  // ---------- Berater (Tipp) ----------
+  scoreCard(c, hand, s) {
+    const P = { A: 11, B: 10, K: 4, O: 3, U: 2 };
+    let sc = 0;
+    const others = hand.filter(o => o.id !== c.id);
+    if (c.rank === 'U' && others.length) sc -= 30; // Joker bhalte
+    if (c.rank === 'A' && others.length && !others.some(o => o.rank === 'A' || o.rank === 'U' || o.suit === c.suit)) sc -= 35; // blutte Ass
+    if (c.rank === 'A' && !others.length) sc -= 40; // Ass als letschti
+    if (c.rank === '8' && !others.length) sc -= 40; // Achti als letschti
+    if (c.rank === '7' && s.bot.length <= 2) sc += 30; // Gägner bremse
+    if (c.rank === '8' && others.length) sc += 18; // Doppelzug
+    sc += others.filter(o => o.suit === c.suit).length * 4; // flexibel bliibe
+    sc += (P[c.rank] || 0) * 0.4; // Pünkt abbaue
+    return sc;
+  }
+  advise() {
+    const s = this.state;
+    const cand = s.player.filter(c => this.canPlay(c));
+    if (!cand.length) return { card: null };
+    let best = null, bestSc = -1e9;
+    cand.forEach(c => { const sc = this.scoreCard(c, s.player, s); if (sc > bestSc) { bestSc = sc; best = c; } });
+    return { card: best, score: bestSc };
+  }
+  reasonFor(played, best, s) {
+    const pre = 'Bessere Zug wär ' + this.cardName(best) + ' gsi: ';
+    const others = s.player.filter(o => o.id !== played.id);
+    if (played.rank === 'U' && best.rank !== 'U') return pre + 'bhalt dr Under als Joker, solang anderi Charte gönd.';
+    if (played.rank === 'A' && !others.some(o => o.rank === 'A' || o.rank === 'U' || o.suit === played.suit)) return pre + 'en Ass ohni Deckig heisst zieh, bis es goht.';
+    if (best.rank === '7' && s.bot.length <= 2) return pre + 'd Siebni hett dr Computer bremst — er het fascht kei Charte meh!';
+    if (best.rank === '8') return pre + 'mit dr Achti wärsch grad nomol dra gsi.';
+    return pre + 'vo ' + this.suitName(best.suit) + ' hesch meh Charte — das hebt di flexibler.';
+  }
+  hintClick() {
+    const s = this.state;
+    if (s.phase !== 'play' || s.turn !== 'du') return;
+    const adv = this.advise();
+    if (!adv.card) {
+      this.setState({ hintId: null, message: s.pending7 > 0 ? 'Tipp: kei Siebni zum Stacke — du muesch zieh.' : 'Tipp: nüt Spielbars — zieh e Charte.' });
+      return;
+    }
+    this.setState({ hintId: adv.card.id, message: 'Tipp: spiel ' + this.cardName(adv.card) + '.' });
+    this.snd('tschau');
+  }
+
+  // ---------- Bot ----------
+  botTurn() {
+    const s = this.state;
+    if (s.phase !== 'play' || s.turn !== 'comp') return;
+    const cand = s.bot.filter(c => this.canPlay(c));
+    if (!cand.length && s.cover === 'comp') {
+      const r = this.drawUntilCover('comp');
+      this.snd('draw');
+      this.setState({ message: 'Dr Computer zieht ' + r.n + ' Charte zum Decke.' });
+      this.after(1200, () => {
+        const s2 = this.state;
+        if (s2.phase !== 'play' || s2.turn !== 'comp') return;
+        if (r.found) this.playCard('comp', r.found);
+        else this.nextTurn('comp', { rank: 'x' });
+      });
+      return;
+    }
+    if (!cand.length && s.pending7 > 0) {
+      // muess d Strofcharte zieh, denn normal wiiterspiele
+      this.drawCards('comp', s.pending7);
+      this.snd('draw');
+      this.setState({ pending7: 0, message: 'Dr Computer zieht ' + s.pending7 + ' Charte.' });
+      this.after(1100, () => {
+        const s2 = this.state;
+        if (s2.phase !== 'play' || s2.turn !== 'comp') return;
+        const cand2 = s2.bot.filter(c => this.canPlay(c));
+        if (cand2.length) this.playCard('comp', this.botPick(cand2));
+        else this.nextTurn('comp', { rank: 'x' });
+      });
+      return;
+    }
+    if (!cand.length) {
+      const got = this.drawCards('comp', 1);
+      this.snd('draw');
+      this.setState({ message: 'Dr Computer zieht e Charte.' });
+      this.after(1000, () => {
+        const drawn = got[0];
+        if (drawn && this.canPlay(drawn)) this.playCard('comp', drawn);
+        else this.nextTurn('comp', { rank: 'x' });
+      });
+      return;
+    }
+    const pick = this.botPick(cand);
+    this.after(250, () => this.playCard('comp', pick));
+  }
+  botPick(cand) {
+    const s = this.state;
+    if (s.difficulty === 'gmuetlich') return cand[Math.floor(Math.random() * cand.length)];
+    const nonJ = cand.filter(c => c.rank !== 'U');
+    let pool = (nonJ.length && s.bot.length > 1) ? nonJ : cand;
+    // kein «blutte» Ass spiele, wenn nüt zum Decke do isch
+    const safe = pool.filter(c => c.rank !== 'A' || s.bot.some(o => o.id !== c.id && (o.rank === 'A' || o.rank === 'U' || o.suit === c.suit)));
+    if (safe.length) pool = safe;
+    if (s.cover) { pool = pool.slice().sort((a, b) => (a.rank === 'A' ? 1 : 0) - (b.rank === 'A' ? 1 : 0)); return pool[0]; }
+    if (s.player.length <= 2) { const seven = pool.find(c => c.rank === '7'); if (seven) return seven; }
+    if (s.bot.length > 1) { const eight = pool.find(c => c.rank === '8'); if (eight) return eight; }
+    const count = {};
+    s.bot.forEach(c => count[c.suit] = (count[c.suit] || 0) + 1);
+    const P = { A: 11, B: 10, K: 4, O: 3, U: 2 };
+    return pool.slice().sort((a, b) => (count[b.suit] - count[a.suit]) || ((P[b.rank] || 0) - (P[a.rank] || 0)))[0];
+  }
+  botWish(hand) {
+    const count = { rose: 0, schilte: 0, eichle: 0, schaelle: 0 };
+    hand.forEach(c => { if (c.rank !== 'U') count[c.suit]++; });
+    return Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+  }
+
+  // ---------- Round end ----------
+  endRound(winner) {
+    const s = this.state;
+    const pts = this.pointsOf(winner === 'du' ? s.bot : s.player);
+    const scores = { ...s.scores }; scores[winner] += pts;
+    const rounds = { ...s.rounds }; rounds[winner]++;
+    this.setState({ phase: 'roundEnd', scores, rounds, roundEnd: { winner, pts } });
+    this.snd(winner === 'du' ? 'win' : 'lose');
+    if (winner === 'comp') this.after(2200, () => this.setState({ bubble: null }));
+  }
+  nextRound() {
+    this.setState({ roundNum: this.state.roundNum + 1, starter: this.state.starter === 'du' ? 'comp' : 'du' }, () => this.startRound());
+  }
+
+  // ---------- Render ----------
+  renderVals() {
+    const s = this.state;
+    const vh = window.innerHeight || 900;
+    const vw = window.innerWidth || 1400;
+    const fit = Math.max(0.58, Math.min(1, vh / 880, vw / 1100));
+    const scale = +(this.props.kartegroessi ?? 1) * fit;
+    const W = Math.round(110 * scale), H = Math.round(165 * scale);
+    const bW = Math.round(W * 0.66);
+    const felt = this.props.tischfarbe ?? '#31694a';
+    const myTurn = s.phase === 'play' && s.turn === 'du';
+    const gold = '#f0c243';
+
+    const playerCards = s.player.map((c, i) => {
+      const n = s.player.length, off = i - (n - 1) / 2;
+      const sp = Math.min(76 * scale, 660 / Math.max(n - 1, 1));
+      const tx = Math.round(off * sp - W / 2), ty = Math.round(Math.pow(Math.abs(off), 1.6) * 3.2);
+      const rot = (off * 3.5).toFixed(1);
+      const ok = myTurn && this.canPlay(c);
+      const hinted = ok && s.hintId === c.id;
+      return {
+        uri: this.face(c),
+        tf: 'translateX(' + tx + 'px) translateY(' + ty + 'px) rotate(' + rot + 'deg)',
+        htf: ok ? 'translateX(' + tx + 'px) translateY(' + (ty - 30) + 'px) rotate(' + (rot * 0.3).toFixed(1) + 'deg) scale(1.05)' : 'translateX(' + tx + 'px) translateY(' + ty + 'px) rotate(' + rot + 'deg)',
+        z: i + 1,
+        delay: (i * 0.07).toFixed(2) + 's',
+        shadow: hinted ? '0 0 0 4px rgba(120,190,255,0.95), 0 0 26px rgba(120,190,255,0.8), 0 10px 22px rgba(0,0,0,0.5)' : (ok ? '0 0 0 3px rgba(240,194,67,0.95), 0 10px 22px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.4)'),
+        dim: (!myTurn || ok) ? 1 : 0.78,
+        cursor: ok ? 'pointer' : 'default',
+        play: () => this.tryPlay(c.id),
+      };
+    });
+
+    const botCards = s.bot.map((c, i) => {
+      const n = s.bot.length, off = i - (n - 1) / 2;
+      const sp = Math.min(36, 480 / Math.max(n - 1, 1));
+      const tx = Math.round(off * sp - bW / 2);
+      return {
+        tf: 'translateX(' + tx + 'px) translateY(' + Math.round(Math.pow(Math.abs(off), 1.6) * 2) + 'px) rotate(' + (-off * 2.5).toFixed(1) + 'deg)',
+        delay: (i * 0.07).toFixed(2) + 's',
+      };
+    });
+
+    const discards = s.discard.slice(-3).map((c, i) => ({
+      uri: this.face(c),
+      rot: ((c.id * 37) % 19) - 9,
+    }));
+
+    const pileStack = s.pile.slice(0, Math.min(3, s.pile.length)).map((_, i) => ({ x: -i * 2, y: -i * 2 }));
+
+    const suits = ['rose', 'schilte', 'eichle', 'schaelle'];
+    const re = s.roundEnd;
+
+    return {
+      // phases
+      isMenu: s.phase === 'menu',
+      started: s.phase !== 'menu',
+      showWish: s.phase === 'wish',
+      showRoundEnd: s.phase === 'roundEnd' && !!re,
+      showRules: s.rules,
+      // table
+      feltBg: 'radial-gradient(ellipse at 50% 32%, ' + felt + ', color-mix(in oklab, ' + felt + ', black 48%))',
+      cardW: W, cardH: H, botW: bW, handH: H + 46,
+      botLabelY: Math.round(bW * 1.5) + 12,
+      pileTop: (() => {
+        const feltH = Math.max(vh - 92, 320);
+        const botBottom = 22 + Math.round(bW * 1.5) + 42; // bot cards + label
+        const handTop = feltH - (H + 60);
+        return Math.round(Math.max((botBottom + handTop) / 2, botBottom + H / 2 + 44));
+      })(),
+      msgTop: (() => {
+        const feltH = Math.max(vh - 92, 320);
+        const botBottom = 22 + Math.round(bW * 1.5) + 42;
+        const handTop = feltH - (H + 60);
+        const pileTop = Math.round(Math.max((botBottom + handTop) / 2, botBottom + H / 2 + 44));
+        return Math.max(botBottom - 4, pileTop - Math.round(H / 2) - 42);
+      })(),
+      passeTop: (() => {
+        const feltH = Math.max(vh - 92, 320);
+        const botBottom = 22 + Math.round(bW * 1.5) + 42;
+        const handTop = feltH - (H + 60);
+        const pileTop = Math.round(Math.max((botBottom + handTop) / 2, botBottom + H / 2 + 44));
+        return pileTop + Math.round(H / 2) + 40;
+      })(),
+      pileGap: Math.round(W * 0.85 + 90),
+      chipLeft: Math.round(W / 2 + 76),
+      tschauBottom: H + 76,
+      backUri: this.backUri(),
+      // top bar
+      scoreDu: s.scores.du, scoreComp: s.scores.comp,
+      roundLine: 'Rundä ' + s.roundNum + ' · Gwunne ' + s.rounds.du + ':' + s.rounds.comp,
+      duDot: myTurn ? gold : 'rgba(255,255,255,0.15)',
+      compDot: (s.phase === 'play' && s.turn === 'comp') ? gold : 'rgba(255,255,255,0.15)',
+      soundLabel: s.sound ? '♪ Ton: ii' : '♪ Ton: us',
+      // game
+      message: s.message,
+      botCount: s.bot.length,
+      drawCount: s.pile.length,
+      drawCursor: (myTurn && !s.hasDrawn) ? 'pointer' : 'default',
+      playerCards, botCards, discards, pileStack,
+      showBubble: !!s.bubble, bubbleText: s.bubble,
+      showWishChip: !!s.wish && (s.phase === 'play' || s.phase === 'wish'),
+      wishUri: s.wish ? this.suitUri(s.wish) : '',
+      wishName: s.wish ? this.suitName(s.wish) : '',
+      showTschau: s.phase === 'play' && s.player.length === 1 && !s.saidDu,
+      showHint: myTurn,
+      hintClick: () => this.hintClick(),
+      showTip: !!s.tip && s.phase === 'play',
+      tipText: s.tip,
+      tipBottom: H + 84,
+      showPasse: myTurn && s.hasDrawn && !s.cover,
+      // menus
+      menuSuits: suits.map(x => ({ uri: this.suitUri(x), name: this.suitName(x) })),
+      wishOptions: suits.map(x => ({ uri: this.suitUri(x), name: this.suitName(x), pick: () => this.pickWish(x) })),
+      roundEndTitle: re ? (re.winner === 'du' ? 'Sepp! Du hesch d Rundä gwunne!' : 'Dr Computer het gwunne.') : '',
+      roundEndColor: re && re.winner === 'du' ? '#31694a' : '#7c1f26',
+      roundEndPts: re ? ('+' + re.pts + ' Pünkt ' + (re.winner === 'du' ? 'für di' : 'für dr Computer')) : '',
+      roundEndScore: 'Stand: Du ' + s.scores.du + ' — Computer ' + s.scores.comp,
+      // handlers
+      startEasy: () => this.start('gmuetlich'),
+      startSmart: () => this.start('gwieft'),
+      toMenu: () => this.toMenu(),
+      nextRoundClick: () => this.nextRound(),
+      drawClick: () => this.drawClick(),
+      passTurn: () => this.passTurn(),
+      sayTschau: () => this.sayTschau(),
+      openRules: () => this.setState({ rules: true }),
+      closeRules: () => this.setState({ rules: false }),
+      toggleSound: () => this.setState({ sound: !this.state.sound }),
+    };
+  }
+}
+</script>
+</body>
+</html>
