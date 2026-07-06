@@ -31,22 +31,18 @@ suboptimal plays.
 
 ## Tech
 
-- **Single self-contained page.** No build step, no server, no bundler.
-- `index.html` is the original **design-component** file authored by Claude Design; it
-  uses a compact template DSL (`<x-dc>`, `<sc-if>`, `<sc-for>`, `{{ }}`) with the game
-  logic in a `class Component`.
-- `support.js` is a small (~10 KB) runtime — a `DCLogic` base class plus a template
-  engine with in-place DOM reconciliation — that executes that component in the
-  browser. It was written to accompany the handoff (the original bundle referenced but
-  did not include it).
+- **Single self-contained page.** `index.html` is the complete game — markup, styles,
+  game logic, card art, and the component runtime, all inlined into one file. No build
+  step, no server, no other files.
 - **No external assets.** Every card face, suit symbol, and card back is generated at
   runtime as inline SVG; every sound is synthesized with the Web Audio API. The only
-  network dependency is the *Vollkorn* web font from Google Fonts.
+  network dependency is the *Vollkorn* web font from Google Fonts (falls back to Georgia
+  offline).
 
 ## Running Locally
 
-It uses no ES-module imports, so you can open `index.html` directly — or, to mirror
-production, serve it over HTTP:
+`index.html` is fully self-contained, so you can just open it directly in a browser
+(it even works from `file://`) — or, to mirror production, serve it over HTTP:
 
 ```bash
 python3 -m http.server 8000
@@ -55,7 +51,7 @@ python3 -m http.server 8000
 
 ## Provenance & Credits
 
-Designed by **Claude Design** and delivered as a high-fidelity design-component
-handoff. The game logic, rules, AI, artwork, and Swiss-German copy are the designer's;
-the accompanying `support.js` runtime and this repo were produced by
-[Claude Code](https://claude.com/claude-code) to make the handoff playable on the web.
+Designed by **Claude Design** and delivered as a self-contained publish package. The
+game logic, rules, AI, artwork, and Swiss-German copy are the designer's; this repo was
+assembled by [Claude Code](https://claude.com/claude-code) to publish the handoff on the
+web.
