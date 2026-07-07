@@ -2,8 +2,8 @@
 
 The classic **Swiss card game** — a Mau-Mau / Uno-style game with authentic
 **Jasskarten** (36 cards, suits *Rose · Schilte · Eichle · Schälle*). Play
-**solo against the computer** (two AI difficulty levels) or **online against a
-friend** (serverless peer-to-peer). Coaching/hint system, multi-round scoring,
+**solo against the computer** (two AI difficulty levels) or **online with 2–4
+players** (serverless peer-to-peer). Coaching/hint system, multi-round scoring,
 synthesized sound, and a fully Swiss-German (Schwiizerdütsch) interface.
 
 **▶️ Play it: https://github.freaxnx01.ch/game-tschau-sepp/**
@@ -30,15 +30,21 @@ accumulate; the starter alternates each round.
 high-value cards). Stuck? Hit **Tipp?** for the best move; a coach also flags clearly
 suboptimal plays.
 
-## Online 2-Player
+## Online Multiplayer (2–4 players)
 
-Play head-to-head against a friend with no backend — signaling is manual copy-paste,
-gameplay runs peer-to-peer over WebRTC:
+Play with up to three friends with no backend — signaling is manual copy-paste,
+gameplay runs peer-to-peer over WebRTC in a **star topology** with the host as the
+authoritative game state:
 
-1. One player clicks **Spiel erstelle** and gets an **offer code**.
-2. The other clicks **Spiel biitrette**, pastes the offer, and returns an **answer code**.
-3. Paste the answer back and you're connected — the game then runs directly between the
-   two browsers over an `RTCDataChannel`.
+1. The host clicks **Spiel erstelle** and generates **one offer code per joining player**.
+2. Each guest clicks **Spiel biitrette**, pastes the offer, and returns an **answer code**.
+3. The host pastes each answer back — connected guests run directly against the host over
+   an `RTCDataChannel`, and the host relays game snapshots to everyone.
+
+Everyone picks a **display name** (funny defaults suggested) and sees a **player overview**.
+Offer codes are valid for **10 minutes** (a countdown is shown) and can be regenerated. You
+can **leave with a confirmation** (the others are notified), and there's a **history of
+cards played since your last turn** so you never lose track in a bigger table.
 
 Signaling codes travel however you like (chat, email). Connectivity uses Google's public
 **STUN** servers only. Note: STUN-only can fail behind strict/symmetric NATs (some
