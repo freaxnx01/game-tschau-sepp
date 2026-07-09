@@ -43,7 +43,8 @@
         <div style="color: #cbb98a; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ roundLine }}</div>
       </sc-if>
     </div>
-    <div style="display: flex; gap: 10px; flex-shrink: 0; white-space: nowrap;">
+    <div style="display: flex; gap: 10px; flex-shrink: 0; white-space: nowrap; align-items: center;">
+      <a href="https://github.freaxnx01.ch/games/" target="_blank" rel="noopener" title="Meh Browser-Spiel" style="font-family: inherit; font-size: 14px; font-weight: 700; color: #f0c243; text-decoration: none; white-space: nowrap; padding: 4px 6px;">More Games…</a>
       <button onClick="{{ openRules }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">Regle</button>
       <button onClick="{{ toggleSound }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">{{ soundLabel }}</button>
       <sc-if value="{{ started }}" hint-placeholder-val="{{ false }}">
@@ -97,9 +98,9 @@
       </div>
 
       <!-- Discard pile -->
-      <div data-screen-label="Ablagestapel" style="position: absolute; left: calc(50% + 5px); top: {{ pileTop }}px; width: 0; height: 0;">
+      <div data-screen-label="Ablagestapel" style="position: absolute; right: {{ discardRight }}px; top: {{ pileTop }}px; width: 0; height: 0;">
         <sc-for list="{{ discards }}" as="d" hint-placeholder-count="0">
-          <div style="position: absolute; left: 0; top: 0; width: {{ cardW }}px; aspect-ratio: 2 / 3; background-image: url({{ d.uri }}); background-size: 100% 100%; transform: translate(-50%, -50%) rotate({{ d.rot }}deg); border-radius: 10px; box-shadow: 0 5px 14px rgba(0,0,0,0.5); animation: slap 0.25s backwards;"></div>
+          <div style="position: absolute; left: 0; top: 0; width: {{ discardW }}px; aspect-ratio: 2 / 3; background-image: url({{ d.uri }}); background-size: 100% 100%; transform: translate(-50%, -50%) rotate({{ d.rot }}deg); border-radius: 10px; box-shadow: 0 5px 14px rgba(0,0,0,0.5); animation: slap 0.25s backwards;"></div>
         </sc-for>
       </div>
 
@@ -330,10 +331,14 @@
       <div data-screen-label="Rundenendi" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15,20,12,0.5); z-index: 60;">
         <div style="background: linear-gradient(180deg, #f6efdc, #ede1c2); border: 3px solid #b8923a; box-shadow: 0 0 0 6px #3a2818, 0 20px 50px rgba(0,0,0,0.6); border-radius: 20px; padding: 38px 54px; text-align: center; max-width: 500px; animation: popIn 0.35s;">
           <div style="font-size: 38px; font-weight: 900; color: {{ roundEndColor }}; line-height: 1.15;">{{ roundEndTitle }}</div>
-          <sc-if value="{{ showRoundEndCard }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ showRoundEndCards }}" hint-placeholder-val="{{ false }}">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 16px;">
-              <div style="width: 92px; aspect-ratio: 2 / 3; background-image: url({{ roundEndCardUri }}); background-size: 100% 100%; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); transform: rotate(-4deg);"></div>
-              <div style="font-size: 14px; font-style: italic; color: #8a7350;">Di letschti Charte</div>
+              <div style="display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 8px;">
+                <sc-for list="{{ roundEndCards }}" as="rc" hint-placeholder-count="0">
+                  <div style="width: 92px; aspect-ratio: 2 / 3; background-image: url({{ rc.uri }}); background-size: 100% 100%; border-radius: 8px; box-shadow: 0 8px 20px rgba(0,0,0,0.35); transform: rotate(-4deg);"></div>
+                </sc-for>
+              </div>
+              <div style="font-size: 14px; font-style: italic; color: #8a7350;">{{ roundEndCardLabel }}</div>
             </div>
           </sc-if>
           <div style="font-size: 22px; font-weight: 700; color: #4a3416; margin-top: 14px;">{{ roundEndPts }}</div>
@@ -1076,7 +1081,16 @@ class Component extends DCLogic {
     let pts = 0;
     s.seats.forEach((x, i) => { if (i !== winner) pts += this.pointsOf(x.hand); });
     const seats = s.seats.map((x, i) => i === winner ? { ...x, score: x.score + pts, rounds: x.rounds + 1 } : x);
-    this.setState({ phase: 'roundEnd', seats, roundEnd: { winner, pts, card: s.discard[s.discard.length - 1] || null } });
+    // Charte vom letschte Zug vom Gwinner: dr zämehängend Lauf am Änd vo dr History mit sim Sitz.
+    // (Es Zug cha meh als ei Charte sii — z.B. Ass decke — drum nämmer dr ganz Lauf, nöd nur d oberschti.)
+    const hist = s.history || [];
+    const lastCards = [];
+    for (let i = hist.length - 1; i >= 0; i--) {
+      if (hist[i].seat !== winner) break;
+      lastCards.unshift({ id: hist[i].id, suit: hist[i].suit, rank: hist[i].rank });
+    }
+    const topCard = s.discard[s.discard.length - 1] || null;
+    this.setState({ phase: 'roundEnd', seats, roundEnd: { winner, pts, card: topCard, cards: lastCards.length ? lastCards : (topCard ? [topCard] : []) } });
     this.sndRound(winner);
     if (this.state.bubble) this.after(2200, () => this.setState({ bubble: null }));
   }
@@ -1496,6 +1510,8 @@ class Component extends DCLogic {
     const pileStack = s.pile.slice(0, Math.min(3, s.pile.length)).map((_, i) => ({ x: -i * 2, y: -i * 2 }));
     const suits = ['rose', 'schilte', 'eichle', 'schaelle'];
     const re = s.roundEnd;
+    // Charte vom letschte Zug vom Gwinner (mit Fallback uf di eint oberschti Charte).
+    const reCards = re ? (re.cards && re.cards.length ? re.cards : (re.card ? [re.card] : [])) : [];
     const mp = s.mp || null;
     const stage = mp ? mp.stage : '';
     const cd = mp && mp.expiresAt ? Math.max(0, mp.expiresAt - Date.now()) : null;
@@ -1505,6 +1521,10 @@ class Component extends DCLogic {
     const botBottom = 22 + Math.round(bW * 1.5) + 42;
     const handTop = feltH - (H + 60);
     const pileTop = Math.round(Math.max((botBottom + handTop) / 2, botBottom + H / 2 + 44));
+    // Ablagestapel: grösser als d Charte (cardW wird vom Zugstapel + Hand teilt) und rächts platziert,
+    // so dass er dr Tschau-Chnopf (right:44px, 110px breit) und dr Wunsch-Chip (chipLeft) nöd überlappt.
+    const discardW = Math.round(W * 1.35);
+    const discardRight = 200 + Math.round(discardW / 2);
 
     return {
       // phases
@@ -1556,7 +1576,7 @@ class Component extends DCLogic {
       setPeer: (e) => { this.peerCode = e.target.value; },
       // table
       feltBg: 'radial-gradient(ellipse at 50% 32%, ' + felt + ', color-mix(in oklab, ' + felt + ', black 48%))',
-      cardW: W, cardH: H, botW: bW, handH: H + 46,
+      cardW: W, cardH: H, botW: bW, handH: H + 46, discardW, discardRight,
       botLabelY: Math.round(bW * 1.5) + 12,
       pileTop,
       msgTop: Math.max(botBottom - 4, pileTop - Math.round(H / 2) - 42),
@@ -1594,6 +1614,9 @@ class Component extends DCLogic {
       drawToastText: s.drawToast || '',
       showRoundEndCard: !!(re && re.card),
       roundEndCardUri: re && re.card ? this.face(re.card) : '',
+      showRoundEndCards: reCards.length > 0,
+      roundEndCards: reCards.map(c => ({ uri: this.face(c) })),
+      roundEndCardLabel: reCards.length > 1 ? 'Di letschte Charte' : 'Di letschti Charte',
       // menus
       menuSuits: suits.map(x => ({ uri: this.suitUri(x), name: this.suitName(x) })),
       wishOptions: suits.map(x => ({ uri: this.suitUri(x), name: this.suitName(x), pick: () => this.pickWish(x) })),
