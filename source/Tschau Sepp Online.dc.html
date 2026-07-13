@@ -98,7 +98,7 @@
       </div>
 
       <!-- Discard pile -->
-      <div data-screen-label="Ablagestapel" style="position: absolute; right: {{ discardRight }}px; top: {{ pileTop }}px; width: 0; height: 0;">
+      <div data-screen-label="Ablagestapel" style="position: absolute; left: calc(50% + {{ discardCX }}px); top: {{ pileTop }}px; width: 0; height: 0;">
         <sc-for list="{{ discards }}" as="d" hint-placeholder-count="0">
           <div style="position: absolute; left: 0; top: 0; width: {{ discardW }}px; aspect-ratio: 2 / 3; background-image: url({{ d.uri }}); background-size: 100% 100%; transform: translate(-50%, -50%) rotate({{ d.rot }}deg); border-radius: 10px; box-shadow: 0 5px 14px rgba(0,0,0,0.5); animation: slap 0.25s backwards;"></div>
         </sc-for>
@@ -1562,10 +1562,10 @@ class Component extends DCLogic {
     const botBottom = 22 + Math.round(bW * 1.5) + 42;
     const handTop = feltH - (H + 60);
     const pileTop = Math.round(Math.max((botBottom + handTop) / 2, botBottom + H / 2 + 44));
-    // Ablagestapel: grösser als d Charte (cardW wird vom Zugstapel + Hand teilt) und rächts platziert,
-    // so dass er dr Tschau-Chnopf (right:44px, 110px breit) und dr Wunsch-Chip (chipLeft) nöd überlappt.
+    // Ablagestapel: grösser als d Charte (cardW wird vom Zugstapel + Hand teilt) und knapp rächts vo dr
+    // Mitti — zäme mit em Zugstapel (links vo dr Mitti) git das es zentrierts Paar i dr Tischmitti.
     const discardW = Math.round(W * 1.35);
-    const discardRight = 200 + Math.round(discardW / 2);
+    const discardCX = Math.round(W * 0.87);
 
     return {
       // phases
@@ -1617,13 +1617,13 @@ class Component extends DCLogic {
       setPeer: (e) => { this.peerCode = e.target.value; },
       // table
       feltBg: 'radial-gradient(ellipse at 50% 32%, ' + felt + ', color-mix(in oklab, ' + felt + ', black 48%))',
-      cardW: W, cardH: H, botW: bW, handH: H + 46, discardW, discardRight,
+      cardW: W, cardH: H, botW: bW, handH: H + 46, discardW, discardCX,
       botLabelY: Math.round(bW * 1.5) + 12,
       pileTop,
-      msgTop: Math.max(botBottom - 4, pileTop - Math.round(H / 2) - 42),
+      msgTop: Math.max(botBottom - 4, pileTop - Math.round(discardW * 0.75) - 34),
       passeTop: pileTop + Math.round(H / 2) + 40,
-      pileGap: Math.round(W * 0.85 + 90),
-      chipLeft: Math.round(W / 2 + 76),
+      pileGap: Math.round(W * 0.7),
+      chipLeft: Math.round(W * 2.1),
       tschauBottom: H + 76,
       tipBottom: H + 84,
       drawToastBottom: H + 30,
