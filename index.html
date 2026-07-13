@@ -384,7 +384,7 @@ class Component extends DCLogic {
     myName: '',
     seats: [], mySeat: 0,
     pile: [], discard: [],
-    turn: 0, wish: null, wisher: null, cover: null, pending7: 0,
+    turn: 0, wish: null, wisher: null, cover: null, pending7: 0, pendingWinner: null,
     hasDrawn: false,
     roundNum: 1, starter: 0,
     sound: true, rules: false, tip: null, hintId: null,
@@ -658,7 +658,7 @@ class Component extends DCLogic {
     let first = this.state.starter;
     if (!seats[first] || seats[first].status !== 'ok') first = this.nextOk(first, seats);
     this.setState({
-      phase: 'play', seats, pile, discard: [flip], turn: first, wish: null, wisher: null, cover: null, pending7: 0,
+      phase: 'play', seats, pile, discard: [flip], turn: first, wish: null, wisher: null, cover: null, pending7: 0, pendingWinner: null,
       hasDrawn: false, drawToast: null, bubble: null, roundEnd: null, rules: false, history: [], tip: null, hintId: null,
       message: this.M(first, 'start'),
     });
@@ -756,7 +756,18 @@ class Component extends DCLogic {
     if (!this.canPlay(c)) { this.snd('deny'); return; }
     let tip = null;
     const adv = this.advise();
-    if (adv.card && adv.card.id !== c.id && adv.score - this.scoreCard(c, s.seats[my].hand, s) >= 18) {
+    const hand = s.seats[my].hand;
+    // Ass zieht en erzwungeni Deckig no sich — dere Combo-Zug mitzelte, nöd nur s Ass elei
+    let effScore = this.scoreCard(c, hand, s);
+    if (c.rank === 'A') {
+      const afterHand = hand.filter(o => o.id !== c.id);
+      const coverCands = afterHand.filter(o => o.rank === 'A' || o.rank === 'U' || o.suit === c.suit);
+      if (coverCands.length) {
+        const bestCoverSc = Math.max(...coverCands.map(cc => this.scoreCard(cc, afterHand, s)));
+        effScore += bestCoverSc;
+      }
+    }
+    if (adv.card && adv.card.id !== c.id && adv.score - effScore >= 18) {
       tip = this.reasonFor(c, adv.card, s);
     }
     if (s.mode === 'guest') this.send({ t: 'play', id });
@@ -826,6 +837,16 @@ class Component extends DCLogic {
     // last card: win or penalty
     if (hand.length === 0) {
       if (seats[who].said) {
+        if (c.rank === '7') {
+          // Siebni als letschti Charte: anderi Sitz chönd na stacke — de muess dä wo
+          // gwunne hett (het ja kei Charte meh) sälber zieh, falls s zrugg zu ihm chunt,
+          // und d Rundä gaht wieter.
+          patch.pending7 = s.pending7 + 2;
+          patch.pendingWinner = who;
+          this.setState(patch);
+          this.after(200, () => this.nextTurn(who, c));
+          return;
+        }
         patch.bubble = { seat: who, text: 'Sepp!' };
         patch.message = this.M(who, 'sepp');
         this.setState(patch);
@@ -921,7 +942,20 @@ class Component extends DCLogic {
     const n = Math.max(1, s.pending7);
     const got = this.drawCards(who, n);
     this.snd('draw');
-    if (s.pending7 > 0) this.setState({ pending7: 0 });
+    if (s.pending7 > 0) {
+      this.setState({ pending7: 0 });
+      if (s.pendingWinner != null) {
+        const w = s.pendingWinner;
+        this.setState({ pendingWinner: null });
+        if (who !== w) {
+          // Chain isch bi dim Sitz brochen worde, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
+          this.setState({ bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
+          this.after(600, () => this.endRound(w));
+          return;
+        }
+        // dr Gwinner sälber het müesse zieh (het ja kei Charte) — Rundä gaht wieter
+      }
+    }
     if (!got.length) { this.setState({ message: this.M(who, 'noCards') }); this.after(700, () => this.nextTurn(who, { rank: 'x' })); return; }
     this.after(60, () => {
       const hand = this.state.seats[who].hand;
@@ -1028,7 +1062,14 @@ class Component extends DCLogic {
     if (!cand.length && s.pending7 > 0) {
       this.drawCards(me, s.pending7);
       this.snd('draw');
-      this.setState({ pending7: 0, message: this.M(me, 'drewN', s.pending7) });
+      const pw = s.pendingWinner;
+      this.setState({ pending7: 0, pendingWinner: null, message: this.M(me, 'drewN', s.pending7) });
+      if (pw != null && pw !== me) {
+        // Chain isch bim Bot brochen worde, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
+        this.setState({ bubble: { seat: pw, text: 'Sepp!' }, message: this.M(pw, 'sepp') });
+        this.after(600, () => this.endRound(pw));
+        return;
+      }
       this.after(1100, () => {
         const s2 = this.state;
         if (s2.phase !== 'play' || s2.turn !== me) return;
@@ -1382,7 +1423,7 @@ class Component extends DCLogic {
         seats: s.seats.map(x => ({ name: x.name, n: x.hand.length, said: x.said, status: x.status, score: x.score, rounds: x.rounds })),
         myHand: s.seats[i] ? s.seats[i].hand : [],
         discard: s.discard.slice(-3), pileN: s.pile.length,
-        turn: s.turn, wish: s.wish, pending7: s.pending7, cover: s.cover, wisher: s.wisher,
+        turn: s.turn, wish: s.wish, pending7: s.pending7, pendingWinner: s.pendingWinner, cover: s.cover, wisher: s.wisher,
         hasDrawn: s.turn === i ? s.hasDrawn : false,
         roundNum: s.roundNum, roundEnd: s.roundEnd,
         lastM: this.lastM || null, bubble: s.bubble, history: s.history,
@@ -1410,7 +1451,7 @@ class Component extends DCLogic {
     const message = d.lastM ? this.msgText(d.lastM.w, d.lastM.k, d.lastM.x, d.mySeat, seats) : '';
     this.setState({
       phase: d.phase, mySeat: d.mySeat, seats, discard: d.discard, pile: new Array(d.pileN).fill(0),
-      turn: d.turn, wish: d.wish, pending7: d.pending7, cover: d.cover, wisher: d.wisher,
+      turn: d.turn, wish: d.wish, pending7: d.pending7, pendingWinner: d.pendingWinner, cover: d.cover, wisher: d.wisher,
       hasDrawn: d.hasDrawn, roundNum: d.roundNum, roundEnd: d.roundEnd,
       message, bubble: d.bubble, history: d.history || [], mp: null,
     });
