@@ -1548,7 +1548,9 @@ class Component extends DCLogic {
     }));
 
     const discards = s.discard.slice(-3).map(c => ({ uri: this.face(c), rot: ((c.id * 37) % 19) - 9 }));
-    const pileStack = s.pile.slice(0, Math.min(3, s.pile.length)).map((_, i) => ({ x: -i * 2, y: -i * 2 }));
+    const drawable = s.pile.length + Math.max(0, s.discard.length - 1);
+    const pileStackN = s.pile.length > 0 ? Math.min(3, s.pile.length) : (drawable > 0 ? 1 : 0);
+    const pileStack = Array.from({ length: pileStackN }, (_, i) => ({ x: -i * 2, y: -i * 2 }));
     const suits = ['rose', 'schilte', 'eichle', 'schaelle'];
     const re = s.roundEnd;
     // Charte vom letschte Zug vom Gwinner (mit Fallback uf di eint oberschti Charte).
@@ -1635,7 +1637,7 @@ class Component extends DCLogic {
       // game
       message: s.message,
       opps,
-      drawCount: s.pile.length,
+      drawCount: drawable,
       drawCursor: (myTurn && !s.hasDrawn) ? 'pointer' : 'default',
       playerCards, discards, pileStack,
       showBubble, bubbleText, bubbleLeft,
