@@ -6,6 +6,7 @@
 <script src="./support.js"></script>
 </head>
 <body>
+<script src="./version.js"></script>
 <x-dc>
 <helmet>
   <meta charset="utf-8">
@@ -1685,6 +1686,8 @@ class Component extends DCLogic {
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#31694a"/><rect x="38" y="32" width="24" height="36" rx="4" fill="#f7f0dc" stroke="#2a2118" stroke-width="1.5"/><text x="50" y="55" font-size="14" font-weight="900" font-family="Georgia, serif" text-anchor="middle" fill="#7c1f26">TS</text></svg>
 </template>
 <nav id="game-nav" aria-label="Game navigation" style="position:fixed;right:10px;bottom:8px;z-index:2147483647;display:flex;gap:12px;align-items:center;font:600 13px/1.4 system-ui,-apple-system,sans-serif;padding:6px 11px;border-radius:8px;background:rgba(15,17,26,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:.55;transition:opacity .2s" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.55">
+  <span id="version-badge" title="Version" style="color:#5a6072"></span>
+  <span style="color:#5a6072" aria-hidden="true">·</span>
   <a href="https://github.freaxnx01.ch/games/" style="color:#8fd8e8;text-decoration:none">More Games…</a>
   <span style="color:#5a6072" aria-hidden="true">·</span>
   <a href="https://github.com/freaxnx01/game-tschau-sepp" target="_blank" rel="noopener" style="color:#8fd8e8;text-decoration:none">Source</a>
@@ -1694,5 +1697,11 @@ class Component extends DCLogic {
   <a class="github-button" href="https://github.com/freaxnx01/game-tschau-sepp" data-icon="octicon-star" data-size="small" data-show-count="true" aria-label="Star freaxnx01/game-tschau-sepp on GitHub">Star</a>
 </nav>
 <script async defer crossorigin="anonymous" src="https://buttons.github.io/buttons.js"></script>
+<script>
+  (function () {
+    var el = document.getElementById('version-badge');
+    if (el) el.textContent = 'v' + (window.GAME_VERSION || '0.0.0');
+  })();
+</script>
 </body>
 </html>
