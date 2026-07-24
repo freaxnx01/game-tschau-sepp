@@ -433,7 +433,7 @@ class Component extends DCLogic {
     const base = this.funnyName();
     let n = 2;
     while (taken.has((base + ' ' + n).toLowerCase())) n++;
-    return base + ' ' + n;
+    return (base + ' ' + n).slice(0, 18);
   }
   nm(i, viewer, seats) {
     if (i == null) return '?';
@@ -1217,7 +1217,10 @@ class Component extends DCLogic {
   }
 
   // --- Host ---
-  openMp() { this.setState({ myName: this.state.myName || this.funnyName(), mp: { stage: 'choose' } }); }
+  openMp() {
+    const auto = !this.state.myName;
+    this.setState({ myName: this.state.myName || this.funnyName(), myNameCustom: auto ? false : this.state.myNameCustom, mp: { stage: 'choose' } });
+  }
   closeMpPanel() {
     const s = this.state;
     this.closing = true;
