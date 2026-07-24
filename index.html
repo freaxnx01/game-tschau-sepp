@@ -1282,7 +1282,11 @@ class Component extends DCLogic {
       this.guests[idx] = { chan: ch, pc: this.pendingPc };
       this.pendingPc = null;
       ch.onclose = () => this.guestGone(ch._seat);
-      const seats = this.state.seats.concat([{ name: (d.name || 'Gascht').slice(0, 18), kind: 'remote', hand: [], said: false, status: 'ok', score: 0, rounds: 0 }]);
+      const existingNames = this.state.seats.map(x => x.name);
+      const incomingName = (d.name || 'Gascht').slice(0, 18);
+      const collides = existingNames.some(n => n.trim().toLowerCase() === incomingName.trim().toLowerCase());
+      const name = (collides && !d.custom) ? this.uniqueFunnyName(existingNames) : incomingName;
+      const seats = this.state.seats.concat([{ name, kind: 'remote', hand: [], said: false, status: 'ok', score: 0, rounds: 0 }]);
       this.snd('tschau');
       this.setState({ seats, mp: { stage: 'host-lobby', myCode: '', expiresAt: null } });
       this.sendLobby();
@@ -1358,7 +1362,8 @@ class Component extends DCLogic {
       pc.ondatachannel = e => {
         const ch = this.chan = e.channel;
         ch.onopen = () => {
-          this.send({ t: 'hello', name: (this.state.myName || this.funnyName()).slice(0, 18) });
+          const isCustom = !!(this.state.myName && this.state.myNameCustom);
+          this.send({ t: 'hello', name: (this.state.myName || this.funnyName()).slice(0, 18), custom: isCustom });
           this.snd('tschau');
           this.setState({ mode: 'guest', mp: { stage: 'guest-wait', lobby: null } });
         };
