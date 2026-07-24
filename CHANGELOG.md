@@ -6,6 +6,14 @@ All notable changes to this project are documented here, following
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-07-24
+
+### Fixed
+
+- P2P: two players could end up with the same auto-picked nickname when
+  joining a session (e.g. playing zu dritt). The host now assigns a unique
+  pool name on collision; manually typed names are left untouched. (#4)
+
 ## [0.1.0] - 2026-07-18
 
 ### Added
