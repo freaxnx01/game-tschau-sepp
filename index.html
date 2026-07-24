@@ -383,6 +383,7 @@ class Component extends DCLogic {
     mode: 'bot', // bot | host | guest
     difficulty: 'gwieft',
     myName: '',
+    myNameCustom: false,
     seats: [], mySeat: 0,
     pile: [], discard: [],
     turn: 0, wish: null, wisher: null, cover: null, pending7: 0, pendingWinner: null,
@@ -1615,8 +1616,8 @@ class Component extends DCLogic {
       guestLobbyPlayers: (mp && mp.lobby && mp.lobby.names || []).map((n, i) => ({ name: n, tag: i === (mp.lobby.you) ? 'du' : (i === 0 ? 'Host' : 'verbunde') })),
       copyLabel: mp && mp.copied ? 'Kopiert!' : 'Code kopiere',
       myName: s.myName,
-      setName: (e) => this.setState({ myName: e.target.value }),
-      randomName: () => this.setState({ myName: this.funnyName() }),
+      setName: (e) => this.setState({ myName: e.target.value, myNameCustom: true }),
+      randomName: () => this.setState({ myName: this.funnyName(), myNameCustom: false }),
       openMp: () => this.openMp(),
       closeMp: () => this.closeMpPanel(),
       mpHostClick: () => this.mpHostStart(),
