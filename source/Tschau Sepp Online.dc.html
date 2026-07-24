@@ -395,6 +395,7 @@ class Component extends DCLogic {
   caches = {};
   sndSeq = 0;
   guests = {}; // host: seatIdx -> {pc, chan}
+  NAME_POOL = ['Turbo-Sepp', 'Jass-Vreni', 'Schälle-Ueli', 'Eichle-Elvira', 'Under-Hund', 'Bänkli-Beni', 'Rose-Röbi', 'Schilte-Sämi', 'Chäs-Chäthi', 'Gipfeli-Gusti', 'Räbeliechtli-Res', 'Fondue-Fritzli'];
 
   // sync any host state change to the guests (debounced)
   setState(p, cb) { super.setState(p, () => { this.queuePush(); cb && cb(); }); }
@@ -422,8 +423,16 @@ class Component extends DCLogic {
   cardName(c) { return 'dr ' + this.suitName(c.suit) + '-' + this.rankName(c.rank); }
   pointsOf(hand) { const P = { A: 11, B: 10, K: 4, O: 3, U: 2 }; return hand.reduce((a, c) => a + (P[c.rank] || 0), 0); }
   funnyName() {
-    const N = ['Turbo-Sepp', 'Jass-Vreni', 'Schälle-Ueli', 'Eichle-Elvira', 'Under-Hund', 'Bänkli-Beni', 'Rose-Röbi', 'Schilte-Sämi', 'Chäs-Chäthi', 'Gipfeli-Gusti', 'Räbeliechtli-Res', 'Fondue-Fritzli'];
-    return N[Math.floor(Math.random() * N.length)];
+    return this.NAME_POOL[Math.floor(Math.random() * this.NAME_POOL.length)];
+  }
+  uniqueFunnyName(existingNames) {
+    const taken = new Set((existingNames || []).map(n => (n || '').trim().toLowerCase()));
+    const free = this.NAME_POOL.filter(n => !taken.has(n.toLowerCase()));
+    if (free.length) return free[Math.floor(Math.random() * free.length)];
+    const base = this.funnyName();
+    let n = 2;
+    while (taken.has((base + ' ' + n).toLowerCase())) n++;
+    return base + ' ' + n;
   }
   nm(i, viewer, seats) {
     if (i == null) return '?';
