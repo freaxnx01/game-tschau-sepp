@@ -3,6 +3,7 @@
 # CLAUDE.md
 
 Agent context for Claude Code. Read this before taking any action in this repository.
+
 # AI Agent Base Instructions
 
 Canonical, **stack-agnostic** reference for all AI coding agents. Applies to every project regardless of language or framework. Stack-specific overlays live in `.ai/stacks/<stack>.md` and are loaded alongside this file. A project loads **base + exactly one stack overlay**. Tool-specific files (`CLAUDE.md`, `.github/copilot-instructions.md`, `SKILL.md`) derive from base + the chosen stack.
@@ -67,14 +68,14 @@ Framework-specific test project layout, mocking library choice, and assertion li
 
 **Never skip phases. Never write component code before wireframe approval.**
 
-| Phase | Skill | Gate |
+| Phase | Command | Gate |
 |---|---|---|
-| 1 — Brainstorm | `/ui-brainstorm` | ASCII wireframe approved |
-| 2 — Flow       | `/ui-flow`       | Mermaid diagrams approved |
-| 3 — Build      | `/ui-build`      | Shell → logic → interactions → polish |
-| 4 — Review     | `/ui-review`     | Checklist passes |
+| 1 — Brainstorm | `/ui:brainstorm` | ASCII wireframe approved |
+| 2 — Flow       | `/ui:flow`       | Mermaid diagrams approved |
+| 3 — Build      | `/ui:build`      | Shell → logic → interactions → polish |
+| 4 — Review     | `/ui:review`     | Checklist passes |
 
-Skill files live in `.ai/skills/`. The skills themselves are stack-neutral — UI component library preferences (e.g. MudBlazor, shadcn/ui, Material, Flutter widgets) are captured in the active stack overlay.
+These commands ship from the global operator console (`agent-workflow`), installed once into `~/.claude/commands/ui/` — they are **not** synced per-project. They are stack-neutral: UI component library preferences (e.g. MudBlazor, shadcn/ui, Material, Flutter widgets) are read from the active stack overlay when one is present, otherwise inferred from the existing codebase.
 
 ### What to check before writing UI code
 
