@@ -388,8 +388,8 @@ class Component extends DCLogic {
     turn: 0, wish: null, wisher: null, cover: null, pending7: 0, pendingWinner: null,
     hasDrawn: false,
     roundNum: 1, starter: 0,
-    sound: true, rules: false, tip: null, hintId: null,
-    roundEnd: null, bubble: null, history: [], drawToast: null,
+    sound: true, rules: false, debugOpen: false, tip: null, hintId: null,
+    roundEnd: null, bubble: null, history: [], debugLog: [], drawToast: null,
     message: '', mp: null, confirmLeave: false,
   };
   tk = 0;
@@ -669,7 +669,7 @@ class Component extends DCLogic {
     if (!seats[first] || seats[first].status !== 'ok') first = this.nextOk(first, seats);
     this.setState({
       phase: 'play', seats, pile, discard: [flip], turn: first, wish: null, wisher: null, cover: null, pending7: 0, pendingWinner: null,
-      hasDrawn: false, drawToast: null, bubble: null, roundEnd: null, rules: false, history: [], tip: null, hintId: null,
+      hasDrawn: false, drawToast: null, bubble: null, roundEnd: null, rules: false, history: [], debugLog: [], tip: null, hintId: null,
       message: this.M(first, 'start'),
     });
     this.snd('deal');
@@ -683,7 +683,7 @@ class Component extends DCLogic {
   }
   resetToMenu() {
     this.tk++;
-    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: null, bubble: null, rules: false, confirmLeave: false, history: [], roundEnd: null });
+    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: null, bubble: null, rules: false, confirmLeave: false, history: [], debugLog: [], roundEnd: null });
   }
   leaveClickFn() {
     if (this.state.mode === 'bot') this.resetToMenu();
@@ -794,6 +794,7 @@ class Component extends DCLogic {
     const hand = seats[who].hand.filter(x => x.id !== c.id);
     seats[who] = { ...seats[who], hand };
     const history = s.history.concat([{ seat: who, id: c.id, suit: c.suit, rank: c.rank }]).slice(-12);
+    const baseEntry = { seat: who, suit: c.suit, rank: c.rank };
     const patch = { seats, discard: s.discard.concat([c]), history, hasDrawn: false, cover: null, hintId: null };
     if (c.rank !== 'U') patch.wish = null;
     this.snd('play');
@@ -810,6 +811,7 @@ class Component extends DCLogic {
     // Ass: muess deckt wärde
     if (c.rank === 'A') {
       if (hand.length === 0) {
+        patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Blutt Ass — muess decke' }]);
         patch.message = this.M(who, 'bareAce');
         this.setState(patch);
         this.snd('penalty');
@@ -822,6 +824,7 @@ class Component extends DCLogic {
         });
         return;
       }
+      patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Muess decke' }]);
       patch.cover = who;
       patch.message = this.M(who, 'coverPrompt');
       this.setState(patch);
@@ -831,6 +834,7 @@ class Component extends DCLogic {
 
     // 8 als letschti Charte: strengi Variante
     if (c.rank === '8' && hand.length === 0) {
+      patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Achti als letschti Charte — zieht 1, nomol dra' }]);
       patch.message = this.M(who, 'eightLast');
       this.setState(patch);
       this.snd('penalty');
@@ -851,18 +855,21 @@ class Component extends DCLogic {
           // Siebni als letschti Charte: anderi Sitz chönd na stacke — de muess dä wo
           // gwunne hett (het ja kei Charte meh) sälber zieh, falls s zrugg zu ihm chunt,
           // und d Rundä gaht wieter.
+          patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: '+2, Stapel jetzt ' + (s.pending7 + 2) + ' (als letschti Charte)' }]);
           patch.pending7 = s.pending7 + 2;
           patch.pendingWinner = who;
           this.setState(patch);
           this.after(200, () => this.nextTurn(who, c));
           return;
         }
+        patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Sepp! Gwunne' }]);
         patch.bubble = { seat: who, text: 'Sepp!' };
         patch.message = this.M(who, 'sepp');
         this.setState(patch);
         this.after(600, () => this.endRound(who));
         return;
       }
+      patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: '«Tschau» vergässe — 2 Strofcharte' }]);
       patch.message = this.M(who, 'forgot');
       this.setState(patch);
       this.snd('penalty');
@@ -875,9 +882,12 @@ class Component extends DCLogic {
       if (seats[who].kind === 'bot') {
         const w = this.botWish(hand);
         patch.wish = w;
+        patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Wunsch: ' + this.suitName(w) }]);
         patch.message = this.M(who, 'wished', w);
       } else {
-        patch.phase = 'wish'; patch.wisher = who; patch.message = this.M(who, 'wishPrompt');
+        patch.phase = 'wish'; patch.wisher = who;
+        patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Under gspielt — wartet uf Wunsch' }]);
+        patch.message = this.M(who, 'wishPrompt');
         this.setState(patch);
         return;
       }
@@ -886,6 +896,7 @@ class Component extends DCLogic {
     // 7: +2 zum Zieh
     if (c.rank === '7') patch.pending7 = s.pending7 + 2;
 
+    if (!patch.debugLog) patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: c.rank === '7' ? ('+2, Stapel jetzt ' + patch.pending7) : '' }]);
     this.setState(patch);
     this.after(200, () => this.nextTurn(who, c));
   }
@@ -910,13 +921,15 @@ class Component extends DCLogic {
   pickWish(suit) {
     const s = this.state; const my = s.mySeat;
     if (s.phase !== 'wish' || s.wisher !== my) return;
+    const debugLog = s.debugLog.slice();
+    if (debugLog.length) debugLog[debugLog.length - 1] = { ...debugLog[debugLog.length - 1], effect: 'Wunsch: ' + this.suitName(suit) };
     if (s.mode === 'guest') {
       this.send({ t: 'wish', suit });
-      this.setState({ phase: 'play', wish: suit });
+      this.setState({ phase: 'play', wish: suit, debugLog });
       return;
     }
     this.snd('tschau');
-    this.setState({ phase: 'play', wisher: null, wish: suit, message: this.M(my, 'wished', suit) });
+    this.setState({ phase: 'play', wisher: null, wish: suit, debugLog, message: this.M(my, 'wished', suit) });
     this.after(800, () => this.nextTurn(my, { rank: 'q' }));
   }
 
@@ -1213,7 +1226,7 @@ class Component extends DCLogic {
     if (this.closing) return;
     this.closing = true; this.teardownGuest(); this.closing = false;
     this.tk++;
-    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: { stage: 'choose', error: msg || 'D Verbindig isch verlore gange.' }, bubble: null, rules: false, confirmLeave: false, history: [], roundEnd: null });
+    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: { stage: 'choose', error: msg || 'D Verbindig isch verlore gange.' }, bubble: null, rules: false, confirmLeave: false, history: [], debugLog: [], roundEnd: null });
   }
 
   // --- Host ---
