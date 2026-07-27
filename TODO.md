@@ -1,6 +1,6 @@
 # Tschau Sepp — TODO
 
-- [ ] Widmung für Eric — Text: "Das Spiel isch an Eric gwidmet."
+- [ ] Widmung für Eric — Text: "Das Spiel isch em Eric gwidmet."
 - [x] Show version number in the UI, clickable → open changelog
 - [ ] Multiplayer local mode (2 players, 1 PC / hotseat)
 - [ ] Multiplayer P2P test: home LAN PC ↔ phone on mobile data
