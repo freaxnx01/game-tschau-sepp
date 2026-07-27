@@ -399,6 +399,11 @@
           </sc-if>
           <sc-if value="{{ showCardsPanel }}" hint-placeholder-val="{{ false }}">
             <div style="display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-top: 16px;">
+              <sc-for list="{{ rankHeaders }}" as="rh" hint-placeholder-count="0">
+                <div style="text-align: center; font-size: 12px; font-weight: 700; color: #4a3416;">{{ rh.label }}</div>
+              </sc-for>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-top: 4px;">
               <sc-for list="{{ debugCards }}" as="dc" hint-placeholder-count="0">
                 <div title="{{ dc.label }}" style="aspect-ratio: 2 / 3; background-image: url({{ dc.uri }}); background-size: 100% 100%; border-radius: 6px; opacity: {{ dc.op }}; border: 2px solid {{ dc.borderColor }};"></div>
               </sc-for>
@@ -727,7 +732,7 @@ class Component extends DCLogic {
   }
   resetToMenu() {
     this.tk++;
-    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: null, bubble: null, rules: false, confirmLeave: false, history: [], debugLog: [], roundEnd: null });
+    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: null, bubble: null, rules: false, debugOpen: false, confirmLeave: false, history: [], debugLog: [], roundEnd: null });
   }
   leaveClickFn() {
     if (this.state.mode === 'bot') this.resetToMenu();
@@ -1271,7 +1276,7 @@ class Component extends DCLogic {
     if (this.closing) return;
     this.closing = true; this.teardownGuest(); this.closing = false;
     this.tk++;
-    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: { stage: 'choose', error: msg || 'D Verbindig isch verlore gange.' }, bubble: null, rules: false, confirmLeave: false, history: [], debugLog: [], roundEnd: null });
+    this.setState({ phase: 'menu', mode: 'bot', seats: [], mp: { stage: 'choose', error: msg || 'D Verbindig isch verlore gange.' }, bubble: null, rules: false, debugOpen: false, confirmLeave: false, history: [], debugLog: [], roundEnd: null });
   }
 
   // --- Host ---
@@ -1645,7 +1650,7 @@ class Component extends DCLogic {
     const discardW = Math.round(W * 1.35);
     const discardCX = Math.round(W * 0.87);
     const journalRows = s.debugLog.map(e => {
-      const who = this.nm(e.seat);
+      const who = this.nm(e.seat, my, seats);
       const card = this.rankName(e.rank) + ' ' + this.suitName(e.suit);
       return { text: who + ': ' + card + (e.effect ? ' — ' + e.effect : '') };
     });
@@ -1666,6 +1671,7 @@ class Component extends DCLogic {
       if (inPile) return { card: inPile, loc: 'pile' };
       return { card: null, loc: 'unknown' };
     };
+    const rankHeaders = allRanks.map(r => ({ label: r }));
     const debugCards = [];
     for (const suit of allSuits) {
       for (const rank of allRanks) {
@@ -1690,13 +1696,14 @@ class Component extends DCLogic {
       showDebug: s.debugOpen && s.mode === 'bot',
       showJournalTab: () => this.setState({ debugTab: 'journal' }),
       showCardsTab: () => this.setState({ debugTab: 'cards' }),
-      journalTabColor: (s.debugTab || 'journal') === 'journal' ? '#7c1f26' : '#4a3416',
-      cardsTabColor: (s.debugTab || 'journal') === 'cards' ? '#7c1f26' : '#4a3416',
-      showJournalPanel: (s.debugTab || 'journal') === 'journal',
+      journalTabColor: s.debugTab === 'journal' ? '#7c1f26' : '#4a3416',
+      cardsTabColor: s.debugTab === 'cards' ? '#7c1f26' : '#4a3416',
+      showJournalPanel: s.debugTab === 'journal',
       hasJournalRows: journalRows.length > 0,
       journalRows,
-      showCardsPanel: (s.debugTab || 'journal') === 'cards',
+      showCardsPanel: s.debugTab === 'cards',
       debugCards,
+      rankHeaders,
       showConfirmLeave: s.confirmLeave,
       leaveText: s.mode === 'host' ? 'Du bisch dr Host — wenn du gohsch, isch s Spiel für alli fertig.' : 'Di andere gsehnd denn i dr Übersicht, dass du s Spiel verlaa hesch.',
       doLeave: () => this.doLeave(),
