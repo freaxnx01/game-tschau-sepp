@@ -9,6 +9,7 @@ All notable changes to this project are documented here, following
 ### Added
 
 - Debug mode (solo games): a "Debug" button opens a modal showing this round's play journal and a full 36-card grid of where every card currently is — lets players verify deck integrity themselves.
+- Dedication line on the start menu: "Das Spiel isch em Eric gwidmet."
 
 ### Fixed
 
