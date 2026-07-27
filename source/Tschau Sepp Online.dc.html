@@ -385,7 +385,7 @@ class Component extends DCLogic {
     myNameCustom: false,
     seats: [], mySeat: 0,
     pile: [], discard: [],
-    turn: 0, wish: null, wisher: null, cover: null, pending7: 0, pendingWinner: null,
+    turn: 0, wish: null, wisher: null, cover: null, pending7: 0, sevenChain: 0, pendingWinner: null,
     hasDrawn: false,
     roundNum: 1, starter: 0,
     sound: true, rules: false, debugOpen: false, tip: null, hintId: null,
@@ -466,13 +466,13 @@ class Component extends DCLogic {
         const sk = x.sk === viewer ? 'du wirsch übersprunge' : (this.nm(x.sk, viewer, seats) + ' wird übersprunge');
         return 'Achti! ' + sk.charAt(0).toUpperCase() + sk.slice(1) + (x.nx === viewer ? ' — du bisch dra!' : '.');
       }
-      case 'seven': return mine ? ('Siebni! Zieh ' + x + ' Charte — oder stack sälber e Siebni!') : ('Siebni! ' + O + ' muess ' + x + ' Charte zieh — oder stacke.');
+      case 'seven': return mine ? ('Siebni! (' + x.chain + '. Siebni i Folg) Zieh ' + x.n + ' Charte — oder stack sälber e Siebni!') : ('Siebni! ' + O + ' muess ' + x.n + ' Charte zieh — oder stacke.');
       case 'turn': return mine ? (x ? ('Du bisch dra — Wunsch: ' + this.suitName(x) + '.') : 'Du bisch dra.') : (O + ' studiert…');
       case 'coverFail': return mine ? 'Kei Charte meh zum Zieh — s Ass blibt blutt.' : (O + ' cha s Ass nöd decke — kei Charte meh.');
       case 'noCards': return mine ? 'Kei Charte meh zum Zieh!' : (O + ' cha nüme zieh.');
       case 'drewPlayable': return mine ? 'Du chasch e passendi Charte spiele — oder passe.' : (O + ' zieht e Charte.');
       case 'drewStuck': return mine ? 'Nüt Spielbars…' : (O + ' zieht e Charte.');
-      case 'drewN': return mine ? ('Du ziehsch ' + x + ' Charte.') : (O + ' zieht ' + (x > 1 ? x + ' Charte.' : 'e Charte.'));
+      case 'drewN': return mine ? ('Du ziehsch ' + x.n + ' Charte' + (x.chain > 1 ? ' (' + x.chain + ' Siebni gstapled)' : '') + '.') : (O + ' zieht ' + (x.n > 1 ? x.n + ' Charte.' : 'e Charte.'));
       case 'tschau': return mine ? 'Tschau!' : (O + ' seit «Tschau!»');
       case 'left': return mine ? '' : (O + ' het s Spiel verlaa.');
       default: return '';
@@ -668,7 +668,7 @@ class Component extends DCLogic {
     let first = this.state.starter;
     if (!seats[first] || seats[first].status !== 'ok') first = this.nextOk(first, seats);
     this.setState({
-      phase: 'play', seats, pile, discard: [flip], turn: first, wish: null, wisher: null, cover: null, pending7: 0, pendingWinner: null,
+      phase: 'play', seats, pile, discard: [flip], turn: first, wish: null, wisher: null, cover: null, pending7: 0, sevenChain: 0, pendingWinner: null,
       hasDrawn: false, drawToast: null, bubble: null, roundEnd: null, rules: false, history: [], debugLog: [], tip: null, hintId: null,
       message: this.M(first, 'start'),
     });
@@ -857,6 +857,7 @@ class Component extends DCLogic {
           // und d Rundä gaht wieter.
           patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: '+2, Stapel jetzt ' + (s.pending7 + 2) + ' (als letschti Charte)' }]);
           patch.pending7 = s.pending7 + 2;
+          patch.sevenChain = s.sevenChain + 1;
           patch.pendingWinner = who;
           this.setState(patch);
           this.after(200, () => this.nextTurn(who, c));
@@ -894,7 +895,7 @@ class Component extends DCLogic {
     }
 
     // 7: +2 zum Zieh
-    if (c.rank === '7') patch.pending7 = s.pending7 + 2;
+    if (c.rank === '7') { patch.pending7 = s.pending7 + 2; patch.sevenChain = s.sevenChain + 1; }
 
     if (!patch.debugLog) patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: c.rank === '7' ? ('+2, Stapel jetzt ' + patch.pending7) : '' }]);
     this.setState(patch);
@@ -911,7 +912,7 @@ class Component extends DCLogic {
       msg = this.M(who, 'skip8', { sk, nx: nxt });
     } else {
       nxt = this.nextOk(who);
-      if (s.pending7 > 0) msg = this.M(nxt, 'seven', s.pending7);
+      if (s.pending7 > 0) msg = this.M(nxt, 'seven', { n: s.pending7, chain: s.sevenChain });
       else msg = this.M(nxt, 'turn', s.wish);
     }
     this.setState({ turn: nxt, message: msg, hasDrawn: false, cover: null, hintId: null });
@@ -966,7 +967,7 @@ class Component extends DCLogic {
     const got = this.drawCards(who, n);
     this.snd('draw');
     if (s.pending7 > 0) {
-      this.setState({ pending7: 0 });
+      this.setState({ pending7: 0, sevenChain: 0 });
       if (s.pendingWinner != null) {
         const w = s.pendingWinner;
         this.setState({ pendingWinner: null });
@@ -1086,7 +1087,7 @@ class Component extends DCLogic {
       this.drawCards(me, s.pending7);
       this.snd('draw');
       const pw = s.pendingWinner;
-      this.setState({ pending7: 0, pendingWinner: null, message: this.M(me, 'drewN', s.pending7) });
+      this.setState({ pending7: 0, sevenChain: 0, pendingWinner: null, message: this.M(me, 'drewN', { n: s.pending7, chain: s.sevenChain }) });
       if (pw != null && pw !== me) {
         // Chain isch bim Bot brochen worde, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
         this.setState({ bubble: { seat: pw, text: 'Sepp!' }, message: this.M(pw, 'sepp') });
