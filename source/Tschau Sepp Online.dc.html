@@ -384,7 +384,18 @@
             <button onClick="{{ showJournalTab }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: {{ journalTabColor }}; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 10px; padding: 8px 18px; cursor: pointer;">Journal</button>
             <button onClick="{{ showCardsTab }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: {{ cardsTabColor }}; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 10px; padding: 8px 18px; cursor: pointer;">Charte</button>
           </div>
-          <!-- Journal and Cards content added in Tasks 4 and 5 -->
+          <sc-if value="{{ showJournalPanel }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top: 16px; font-size: 15px; color: #3d3018; line-height: 1.6;">
+              <sc-if value="{{ hasJournalRows }}" hint-placeholder-val="{{ false }}">
+                <sc-for list="{{ journalRows }}" as="j" hint-placeholder-count="0">
+                  <div style="padding: 4px 0; border-bottom: 1px solid rgba(184,146,58,0.35);">{{ j.text }}</div>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{ !hasJournalRows }}" hint-placeholder-val="{{ true }}">
+                <div style="text-align: center; color: #8a7350; font-style: italic;">Na kei Charte gspielt disi Rundi.</div>
+              </sc-if>
+            </div>
+          </sc-if>
           <div style="text-align: center; margin-top: 22px;">
             <button onClick="{{ closeDebug }}" style="font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 2px solid #3a2512; border-radius: 12px; padding: 10px 34px; cursor: pointer;" style-hover="filter: brightness(1.12);">Zuemache</button>
           </div>
@@ -1618,6 +1629,11 @@ class Component extends DCLogic {
     // Mitti — zäme mit em Zugstapel (links vo dr Mitti) git das es zentrierts Paar i dr Tischmitti.
     const discardW = Math.round(W * 1.35);
     const discardCX = Math.round(W * 0.87);
+    const journalRows = s.debugLog.map(e => {
+      const who = this.nm(e.seat);
+      const card = this.rankName(e.rank) + ' ' + this.suitName(e.suit);
+      return { text: who + ': ' + card + (e.effect ? ' — ' + e.effect : '') };
+    });
 
     return {
       // phases
@@ -1632,6 +1648,9 @@ class Component extends DCLogic {
       showCardsTab: () => this.setState({ debugTab: 'cards' }),
       journalTabColor: (s.debugTab || 'journal') === 'journal' ? '#7c1f26' : '#4a3416',
       cardsTabColor: (s.debugTab || 'journal') === 'cards' ? '#7c1f26' : '#4a3416',
+      showJournalPanel: (s.debugTab || 'journal') === 'journal',
+      hasJournalRows: journalRows.length > 0,
+      journalRows,
       showConfirmLeave: s.confirmLeave,
       leaveText: s.mode === 'host' ? 'Du bisch dr Host — wenn du gohsch, isch s Spiel für alli fertig.' : 'Di andere gsehnd denn i dr Übersicht, dass du s Spiel verlaa hesch.',
       doLeave: () => this.doLeave(),
