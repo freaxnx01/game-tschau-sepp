@@ -397,6 +397,18 @@
               </sc-if>
             </div>
           </sc-if>
+          <sc-if value="{{ showCardsPanel }}" hint-placeholder-val="{{ false }}">
+            <div style="display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; margin-top: 16px;">
+              <sc-for list="{{ debugCards }}" as="dc" hint-placeholder-count="0">
+                <div title="{{ dc.label }}" style="aspect-ratio: 2 / 3; background-image: url({{ dc.uri }}); background-size: 100% 100%; border-radius: 6px; opacity: {{ dc.op }}; border: 2px solid {{ dc.borderColor }};"></div>
+              </sc-for>
+            </div>
+            <div style="display: flex; gap: 16px; justify-content: center; margin-top: 12px; font-size: 13px; color: #4a3416;">
+              <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#7c1f26;margin-right:5px;"></span>Dini Hand</span>
+              <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#31694a;margin-right:5px;"></span>Abgleit</span>
+              <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#8a7350;margin-right:5px;"></span>Zugstapel / anderi Händ</span>
+            </div>
+          </sc-if>
           <div style="text-align: center; margin-top: 22px;">
             <button onClick="{{ closeDebug }}" style="font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 2px solid #3a2512; border-radius: 12px; padding: 10px 34px; cursor: pointer;" style-hover="filter: brightness(1.12);">Zuemache</button>
           </div>
@@ -1638,6 +1650,35 @@ class Component extends DCLogic {
       return { text: who + ': ' + card + (e.effect ? ' — ' + e.effect : '') };
     });
 
+    const allRanks = ['6', '7', '8', '9', 'B', 'U', 'O', 'K', 'A'];
+    const allSuits = ['rose', 'schilte', 'eichle', 'schaelle'];
+    const findCard = (suit, rank) => {
+      const inDiscard = s.discard.find(c => c.suit === suit && c.rank === rank);
+      if (inDiscard) return { card: inDiscard, loc: 'discard' };
+      const myHandCard = (seats[my] ? seats[my].hand : []).find(c => c.suit === suit && c.rank === rank);
+      if (myHandCard) return { card: myHandCard, loc: 'myHand' };
+      for (let i = 0; i < seats.length; i++) {
+        if (i === my) continue;
+        const found = (seats[i].hand || []).find(c => c.suit === suit && c.rank === rank);
+        if (found) return { card: found, loc: 'otherHand' };
+      }
+      const inPile = s.pile.find(c => c.suit === suit && c.rank === rank);
+      if (inPile) return { card: inPile, loc: 'pile' };
+      return { card: null, loc: 'unknown' };
+    };
+    const debugCards = [];
+    for (const suit of allSuits) {
+      for (const rank of allRanks) {
+        const { card, loc } = findCard(suit, rank);
+        const known = card || { suit, rank };
+        const uri = loc === 'discard' || loc === 'myHand' ? this.face(known) : this.backUri();
+        const op = loc === 'discard' ? 0.45 : 1;
+        const borderColor = loc === 'myHand' ? '#7c1f26' : loc === 'discard' ? '#31694a' : '#8a7350';
+        const locLabel = { discard: 'abgleit', myHand: 'i dinere Hand', otherHand: 'i re anderne Hand', pile: 'im Zugstapel', unknown: 'nöd gfunde (!)' }[loc];
+        debugCards.push({ uri, op, borderColor, label: this.rankName(rank) + ' ' + this.suitName(suit) + ' — ' + locLabel });
+      }
+    }
+
     return {
       // phases
       isMenu: s.phase === 'menu',
@@ -1654,6 +1695,8 @@ class Component extends DCLogic {
       showJournalPanel: (s.debugTab || 'journal') === 'journal',
       hasJournalRows: journalRows.length > 0,
       journalRows,
+      showCardsPanel: (s.debugTab || 'journal') === 'cards',
+      debugCards,
       showConfirmLeave: s.confirmLeave,
       leaveText: s.mode === 'host' ? 'Du bisch dr Host — wenn du gohsch, isch s Spiel für alli fertig.' : 'Di andere gsehnd denn i dr Übersicht, dass du s Spiel verlaa hesch.',
       doLeave: () => this.doLeave(),
