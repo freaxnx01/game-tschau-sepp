@@ -846,7 +846,7 @@ class Component extends DCLogic {
     seats[who] = { ...seats[who], hand };
     const history = s.history.concat([{ seat: who, id: c.id, suit: c.suit, rank: c.rank }]).slice(-12);
     const baseEntry = { seat: who, suit: c.suit, rank: c.rank };
-    const patch = { seats, discard: s.discard.concat([c]), history, hasDrawn: false, cover: null, hintId: null };
+    const patch = { seats, discard: s.discard.concat([{ ...c, playedBy: who }]), history, hasDrawn: false, cover: null, hintId: null };
     if (c.rank !== 'U') patch.wish = null;
     this.snd('play');
 
@@ -1682,7 +1682,9 @@ class Component extends DCLogic {
         const uri = loc === 'discard' || loc === 'myHand' ? this.face(known) : this.backUri();
         const op = loc === 'discard' ? 0.45 : 1;
         const borderColor = loc === 'myHand' ? '#7c1f26' : loc === 'discard' ? '#31694a' : '#8a7350';
-        const locLabel = { discard: 'abgleit', myHand: 'i dinere Hand', otherHand: 'i re anderne Hand', pile: 'im Zugstapel', unknown: 'nöd gfunde (!)' }[loc];
+        const locLabel = loc === 'discard'
+          ? 'abgleit (' + this.nm(known.playedBy, my, seats) + ')'
+          : { myHand: 'i dinere Hand', otherHand: 'i re anderne Hand', pile: 'im Zugstapel', unknown: 'nöd gfunde (!)' }[loc];
         debugCards.push({ uri, op, borderColor, label: this.rankName(rank) + ' ' + this.suitName(suit) + ' — ' + locLabel });
       }
     }
