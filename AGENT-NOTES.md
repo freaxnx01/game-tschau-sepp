@@ -21,3 +21,15 @@ regenerate (it happened once: commit `846dc67` edited only `index.html`).
 
   The global pre-commit hook (`~/.config/git/hooks/pre-commit`) runs
   gitleaks first, then delegates to this repo-local hook.
+
+## Simulation harness
+
+`scripts/sim/` holds a Node harness that plays CPU-vs-CPU games through the
+real dc logic and verifies the 36-card deck invariant after every state
+change (`harness.mjs`), plus a playCard-guard regression test
+(`test-guard.mjs`). Run after any change to card movement logic:
+
+```bash
+node scripts/sim/test-guard.mjs
+node scripts/sim/harness.mjs '' 500 20   # 10k rounds, ~15 s
+```
