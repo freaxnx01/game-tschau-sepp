@@ -841,6 +841,7 @@ class Component extends DCLogic {
     const s = this.state;
     const seats = s.seats.slice();
     const hand = seats[who].hand.filter(x => x.id !== c.id);
+    if (hand.length === seats[who].hand.length) return; // Charte isch nöd i dr Hand — susch gäb's e Duplikat im Ablagestapel
     seats[who] = { ...seats[who], hand };
     const history = s.history.concat([{ seat: who, id: c.id, suit: c.suit, rank: c.rank }]).slice(-12);
     const baseEntry = { seat: who, suit: c.suit, rank: c.rank };
