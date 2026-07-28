@@ -672,12 +672,15 @@ class Component extends DCLogic {
     this.onR = () => this.forceUpdate(); window.addEventListener('resize', this.onR);
     this.onDoc = () => { if (this.state.tip && Date.now() - (this.tipAt || 0) > 250) this.setState({ tip: null }); };
     document.addEventListener('click', this.onDoc);
+    this.onEsc = (e) => this.handleEscKey(e);
+    window.addEventListener('keydown', this.onEsc);
     this.mpInt = setInterval(() => this.mpTickCheck(), 1000);
   }
   componentWillUnmount() {
     this.mounted = false; this.tk++;
     window.removeEventListener('resize', this.onR);
     document.removeEventListener('click', this.onDoc);
+    window.removeEventListener('keydown', this.onEsc);
     clearInterval(this.mpInt);
     this.closing = true; this.teardownAll();
   }
@@ -747,6 +750,25 @@ class Component extends DCLogic {
     else if (mode === 'host') { this.sendAll({ t: 'bye' }); this.teardownAll(); }
     this.closing = false;
     this.resetToMenu();
+  }
+  topDialogToClose() {
+    const s = this.state;
+    if (s.confirmLeave) return 'confirmLeave';
+    if (s.debugOpen) return 'debug';
+    if (s.rules) return 'rules';
+    return null;
+  }
+  closeDebug() {
+    this.setState({ debugOpen: false });
+    if (this.debugPopupWin && !this.debugPopupWin.closed) this.debugPopupWin.close();
+    this.debugPopupWin = null;
+  }
+  handleEscKey(e) {
+    if (e.key !== 'Escape') return;
+    const target = this.topDialogToClose();
+    if (target === 'confirmLeave') this.setState({ confirmLeave: false });
+    else if (target === 'debug') this.closeDebug();
+    else if (target === 'rules') this.setState({ rules: false });
   }
 
   canPlay(c, s) {
@@ -1809,7 +1831,7 @@ class Component extends DCLogic {
       openRules: () => this.setState({ rules: true }),
       closeRules: () => this.setState({ rules: false }),
       openDebug: () => this.setState({ debugOpen: true, debugTab: 'journal' }),
-      closeDebug: () => this.setState({ debugOpen: false }),
+      closeDebug: () => this.closeDebug(),
       toggleSound: () => this.setState({ sound: !this.state.sound }),
     };
   }
