@@ -19,3 +19,4 @@ jobs:
       runner-labels: '["ubuntu-latest"]'
       default-model: claude-sonnet-5
       max-turns: 60
+      pre-preview: true
