@@ -784,7 +784,7 @@ class Component extends DCLogic {
     win.addEventListener('beforeunload', () => { if (this.debugPopupWin === win) this.debugPopupWin = null; });
     this.debugPopupWin = win;
     if (this.state.debugTab !== 'journal' && this.state.debugTab !== 'cards') this.setState({ debugTab: 'journal' });
-    this.paintDebugPopup(this.renderVals());
+    this.renderVals();
   }
   paintDebugPopup(vm) {
     const win = this.debugPopupWin;
@@ -1869,7 +1869,6 @@ class Component extends DCLogic {
       sayTschau: () => this.sayTschau(),
       openRules: () => this.setState({ rules: true }),
       closeRules: () => this.setState({ rules: false }),
-      openDebug: () => this.setState({ debugOpen: true, debugTab: 'journal' }),
       closeDebug: () => this.closeDebug(),
       debugButtonClick: (e) => this.debugButtonClick(e),
       toggleSound: () => this.setState({ sound: !this.state.sound }),
