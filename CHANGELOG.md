@@ -3,29 +3,89 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com) and
 [Semantic Versioning](https://semver.org).
-
-## [Unreleased]
+## [0.2.0] - 2026-07-28
 
 ### Added
 
-- Debug mode (solo games): a "Debug" button opens a modal showing this round's play journal and a full 36-card grid of where every card currently is — lets players verify deck integrity themselves.
-- Dedication line on the start menu: "Das Spiel isch em Eric gwidmet."
+- Track per-round play journal and debug modal state
+
+- Add debug modal shell with journal/cards tabs
+
+- Render play journal in debug modal
+
+- Render full-deck card-location grid in debug modal
+
+- Add dedication line to Eric on start menu
+
+
+### Documentation
+
+- Add debug-mode design spec; capture dedication text in TODO
+
+- Fix dedication text grammar in TODO
+
+- Add debug-mode implementation plan
+
+- Add debug mode and seven-chain message fix
+
+- Add notes.md with Swiss Jass deck composition
+
 
 ### Fixed
 
-- The stackable-seven message now shows how many sevens were chained separately from how many cards must be drawn, so the draw count (2→4→6→8) can't be misread as a count of seven cards.
+- Add missing per-release version header to changelog template
+
+- Show seven-chain count alongside draw-penalty count
+
+- Reset debugOpen on menu return, add rank headers to card grid
+
+- Enlarge card grid for readability
+
+- Scale card grid modal with viewport width
+
+- Guard playCard against cards not in the player's hand
 
 ## [0.1.1] - 2026-07-24
 
+### Added
+
+- Track whether player's name was manually typed
+
+
+### Changed
+
+- Extract NAME_POOL, add uniqueFunnyName() helper
+
+
+### Documentation
+
+- Add 'Widmung für Eric'; check off version-in-UI (done)
+
+- P2P unique nicknames design (issue #4)
+
+- P2P unique nicknames implementation plan (issue #4)
+
+
 ### Fixed
 
-- P2P: two players could end up with the same auto-picked nickname when
-  joining a session (e.g. playing zu dritt). The host now assigns a unique
-  pool name on collision; manually typed names are left untouched. (#4)
+- Dedup auto-picked P2P nicknames on join (#4)
+
+- Reset myNameCustom on openMp auto-fill; cap uniqueFunnyName suffix length
 
 ## [0.1.0] - 2026-07-18
 
 ### Added
 
-- Initial versioned release of game-tschau-sepp.
-- In-game version badge sourced from `version.js`.
+- Add More Games / Source footer nav
+
+- Link version badge to CHANGELOG on GitHub
+
+
+### Fixed
+
+- Hint no longer flags Ace-then-cover combos, defer win on finishing 7
+
+- Center the draw/discard pair instead of stranding discard on the right
+
+- Show draw pile card back when reshuffle keeps it drawable
+
