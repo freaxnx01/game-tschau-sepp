@@ -1,0 +1,14 @@
+name: dc-sync
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify source and bundle dc blocks match
+        run: scripts/check-dc-sync.sh
