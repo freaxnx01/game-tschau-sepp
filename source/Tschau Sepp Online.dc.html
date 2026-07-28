@@ -47,7 +47,7 @@
       <a href="https://github.freaxnx01.ch/games/" target="_blank" rel="noopener" title="Meh Browser-Spiel" style="font-family: inherit; font-size: 14px; font-weight: 700; color: #f0c243; text-decoration: none; white-space: nowrap; padding: 4px 6px;">More Games…</a>
       <button onClick="{{ openRules }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">Regle</button>
       <sc-if value="{{ showDebugBtn }}" hint-placeholder-val="{{ false }}">
-        <button onClick="{{ openDebug }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">Debug</button>
+        <button onClick="{{ debugButtonClick }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);" title="Ctrl+Click: i separatem Fänschter">Debug</button>
       </sc-if>
       <button onClick="{{ toggleSound }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 14px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.4);" style-hover="filter: brightness(1.15);">{{ soundLabel }}</button>
       <sc-if value="{{ started }}" hint-placeholder-val="{{ false }}">
@@ -671,12 +671,15 @@ class Component extends DCLogic {
     this.onR = () => this.forceUpdate(); window.addEventListener('resize', this.onR);
     this.onDoc = () => { if (this.state.tip && Date.now() - (this.tipAt || 0) > 250) this.setState({ tip: null }); };
     document.addEventListener('click', this.onDoc);
+    this.onEsc = (e) => this.handleEscKey(e);
+    window.addEventListener('keydown', this.onEsc);
     this.mpInt = setInterval(() => this.mpTickCheck(), 1000);
   }
   componentWillUnmount() {
     this.mounted = false; this.tk++;
     window.removeEventListener('resize', this.onR);
     document.removeEventListener('click', this.onDoc);
+    window.removeEventListener('keydown', this.onEsc);
     clearInterval(this.mpInt);
     this.closing = true; this.teardownAll();
   }
@@ -746,6 +749,64 @@ class Component extends DCLogic {
     else if (mode === 'host') { this.sendAll({ t: 'bye' }); this.teardownAll(); }
     this.closing = false;
     this.resetToMenu();
+  }
+  topDialogToClose() {
+    const s = this.state;
+    if (s.confirmLeave) return 'confirmLeave';
+    if (s.debugOpen) return 'debug';
+    if (s.rules) return 'rules';
+    return null;
+  }
+  closeDebug() {
+    this.setState({ debugOpen: false });
+    if (this.debugPopupWin && !this.debugPopupWin.closed) this.debugPopupWin.close();
+    this.debugPopupWin = null;
+  }
+  handleEscKey(e) {
+    if (e.key !== 'Escape') return;
+    const target = this.topDialogToClose();
+    if (target === 'confirmLeave') this.setState({ confirmLeave: false });
+    else if (target === 'debug') this.closeDebug();
+    else if (target === 'rules') this.setState({ rules: false });
+  }
+  debugButtonClick(e) {
+    if (e && (e.ctrlKey || e.metaKey)) this.openDebugPopup();
+    else this.setState({ debugOpen: true, debugTab: 'journal' });
+  }
+  openDebugPopup() {
+    if (this.debugPopupWin && !this.debugPopupWin.closed) { this.debugPopupWin.focus(); return; }
+    const win = window.open('', 'tschau-sepp-debug', 'width=440,height=680');
+    if (!win) return;
+    win.document.write('<!doctype html><html><head><title>Tschau Sepp — Debug</title><meta charset="utf-8"></head><body style="margin:0;background:#ede1c2;font-family:inherit;"></body></html>');
+    win.document.close();
+    win.addEventListener('keydown', (e) => { if (e.key === 'Escape') win.close(); });
+    win.addEventListener('beforeunload', () => { if (this.debugPopupWin === win) this.debugPopupWin = null; });
+    this.debugPopupWin = win;
+    if (this.state.debugTab !== 'journal' && this.state.debugTab !== 'cards') this.setState({ debugTab: 'journal' });
+    this.renderVals();
+  }
+  paintDebugPopup(vm) {
+    const win = this.debugPopupWin;
+    if (!win || win.closed) return;
+    const journalHtml = vm.hasJournalRows
+      ? vm.journalRows.map(j => '<div style="padding:4px 0;border-bottom:1px solid rgba(184,146,58,0.35);">' + j.text + '</div>').join('')
+      : '<div style="text-align:center;color:#8a7350;font-style:italic;">Na kei Charte gspielt disi Rundi.</div>';
+    const headerHtml = vm.rankHeaders.map(rh => '<div style="text-align:center;font-size:16px;font-weight:900;color:#4a3416;">' + rh.label + '</div>').join('');
+    const cardsHtml = vm.debugCards.map(dc =>
+      '<div title="' + dc.label + '" style="aspect-ratio:2/3;background-image:url(' + dc.uri + ');background-size:100% 100%;border-radius:6px;opacity:' + dc.op + ';border:2px solid ' + dc.borderColor + ';"></div>'
+    ).join('');
+    win.document.body.innerHTML = '<div style="padding:16px 20px;font-size:14px;color:#3d3018;">' +
+      '<div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">' +
+      '<button id="dbg-tab-journal" style="font-family:inherit;font-size:13px;font-weight:700;color:' + vm.journalTabColor + ';background:#fdf8ea;border:2px solid #b8923a;border-radius:8px;padding:6px 14px;cursor:pointer;">Journal</button>' +
+      '<button id="dbg-tab-cards" style="font-family:inherit;font-size:13px;font-weight:700;color:' + vm.cardsTabColor + ';background:#fdf8ea;border:2px solid #b8923a;border-radius:8px;padding:6px 14px;cursor:pointer;">Charte</button>' +
+      '</div>' +
+      (vm.showJournalPanel ? '<div>' + journalHtml + '</div>' : '') +
+      (vm.showCardsPanel ? '<div style="display:grid;grid-template-columns:repeat(9,1fr);gap:8px;">' + headerHtml + '</div><div style="display:grid;grid-template-columns:repeat(9,1fr);gap:8px;margin-top:6px;">' + cardsHtml + '</div>' : '') +
+      '<div style="text-align:center;margin-top:16px;"><button id="dbg-close" style="font-family:inherit;font-size:14px;font-weight:800;color:#f6efd9;background:linear-gradient(180deg,#8a5f38,#6b4426);border:2px solid #3a2512;border-radius:10px;padding:8px 26px;cursor:pointer;">Zuemache</button></div>' +
+      '</div>';
+    win.document.getElementById('dbg-tab-journal').onclick = () => this.setState({ debugTab: 'journal' });
+    win.document.getElementById('dbg-tab-cards').onclick = () => this.setState({ debugTab: 'cards' });
+    win.document.getElementById('dbg-close').onclick = () => win.close();
   }
 
   canPlay(c, s) {
@@ -845,7 +906,7 @@ class Component extends DCLogic {
     seats[who] = { ...seats[who], hand };
     const history = s.history.concat([{ seat: who, id: c.id, suit: c.suit, rank: c.rank }]).slice(-12);
     const baseEntry = { seat: who, suit: c.suit, rank: c.rank };
-    const patch = { seats, discard: s.discard.concat([c]), history, hasDrawn: false, cover: null, hintId: null };
+    const patch = { seats, discard: s.discard.concat([{ ...c, playedBy: who }]), history, hasDrawn: false, cover: null, hintId: null };
     if (c.rank !== 'U') patch.wish = null;
     this.snd('play');
 
@@ -1681,12 +1742,14 @@ class Component extends DCLogic {
         const uri = loc === 'discard' || loc === 'myHand' ? this.face(known) : this.backUri();
         const op = loc === 'discard' ? 0.45 : 1;
         const borderColor = loc === 'myHand' ? '#7c1f26' : loc === 'discard' ? '#31694a' : '#8a7350';
-        const locLabel = { discard: 'abgleit', myHand: 'i dinere Hand', otherHand: 'i re anderne Hand', pile: 'im Zugstapel', unknown: 'nöd gfunde (!)' }[loc];
+        const locLabel = loc === 'discard'
+          ? 'abgleit (' + this.nm(known.playedBy, my, seats) + ')'
+          : { myHand: 'i dinere Hand', otherHand: 'i re anderne Hand', pile: 'im Zugstapel', unknown: 'nöd gfunde (!)' }[loc];
         debugCards.push({ uri, op, borderColor, label: this.rankName(rank) + ' ' + this.suitName(suit) + ' — ' + locLabel });
       }
     }
 
-    return {
+    const vm = {
       // phases
       isMenu: s.phase === 'menu',
       started: s.phase !== 'menu',
@@ -1805,10 +1868,12 @@ class Component extends DCLogic {
       sayTschau: () => this.sayTschau(),
       openRules: () => this.setState({ rules: true }),
       closeRules: () => this.setState({ rules: false }),
-      openDebug: () => this.setState({ debugOpen: true, debugTab: 'journal' }),
-      closeDebug: () => this.setState({ debugOpen: false }),
+      closeDebug: () => this.closeDebug(),
+      debugButtonClick: (e) => this.debugButtonClick(e),
       toggleSound: () => this.setState({ sound: !this.state.sound }),
     };
+    if (this.debugPopupWin && !this.debugPopupWin.closed) this.paintDebugPopup(vm);
+    return vm;
   }
 }
 </script>

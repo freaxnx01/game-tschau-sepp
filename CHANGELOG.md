@@ -3,6 +3,18 @@
 All notable changes to this project are documented here, following
 [Keep a Changelog](https://keepachangelog.com) and
 [Semantic Versioning](https://semver.org).
+
+## [Unreleased]
+
+### Added
+
+- Debug dialog: Ctrl+Click the "Debug" button to pop it into its own window, live-updating alongside the main game (#9)
+
+### Fixed
+
+- Debug dialog closes on ESC, along with the Rules and confirm-leave dialogs (#9)
+- Debug "Cards" tab tooltip now names who discarded a card (#9)
+
 ## [0.2.0] - 2026-07-28
 
 ### Added
