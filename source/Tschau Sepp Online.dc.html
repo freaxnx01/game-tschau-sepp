@@ -845,18 +845,21 @@ class Component extends DCLogic {
     const hand = s.seats[who].hand.slice();
     const t = discard[discard.length - 1];
     const covers = c => c.rank === 'A' || c.rank === 'U' || c.suit === t.suit;
+    const entries = [];
     let found = null, n = 0;
     while (!found) {
       if (!pile.length) {
         const rc = this.recycleDiscard(pile, discard);
         if (!rc.reshuffled) break;
         pile = rc.pile; discard = rc.discard;
+        entries.push({ kind: 'reshuffle', n: rc.n });
       }
       const c = pile.pop(); hand.push(c); n++;
       if (covers(c)) found = c;
     }
+    if (n) entries.push({ kind: 'draw', seat: who, n });
     const seats = s.seats.map((x, i) => i === who ? { ...x, hand, said: hand.length === 1 ? x.said : false } : x);
-    this.setState({ pile, discard, seats });
+    this.setState({ pile, discard, seats, debugLog: s.debugLog.concat(entries) });
     if (who === s.mySeat) this.toastDraw(n);
     return { found, n };
   }
@@ -866,16 +869,19 @@ class Component extends DCLogic {
     let pile = s.pile.slice(), discard = s.discard.slice();
     const hand = s.seats[who].hand.slice();
     const got = [];
+    const entries = [];
     for (let i = 0; i < n; i++) {
       if (!pile.length) {
         const rc = this.recycleDiscard(pile, discard);
         if (!rc.reshuffled) break;
         pile = rc.pile; discard = rc.discard;
+        entries.push({ kind: 'reshuffle', n: rc.n });
       }
       const c = pile.pop(); hand.push(c); got.push(c);
     }
+    if (got.length) entries.push({ kind: 'draw', seat: who, n: got.length });
     const seats = s.seats.map((x, i) => i === who ? { ...x, hand, said: hand.length === 1 ? x.said : false } : x);
-    this.setState({ pile, discard, seats });
+    this.setState({ pile, discard, seats, debugLog: s.debugLog.concat(entries) });
     if (who === s.mySeat) this.toastDraw(got.length);
     return got;
   }
