@@ -9,6 +9,8 @@ All notable changes to this project are documented here, following
 ### Added
 
 - Debug dialog: Ctrl+Click the "Debug" button to pop it into its own window, live-updating alongside the main game (#9)
+- Reshuffling the discard pile now shows a "♻ Ablagestapel neu gmischt" toast, including for the P2P guest (#13)
+- Debug journal records draws (who, how many) and reshuffles (#13)
 
 ### Fixed
 
