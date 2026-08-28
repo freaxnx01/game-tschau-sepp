@@ -443,7 +443,7 @@ class Component extends DCLogic {
     hasDrawn: false,
     roundNum: 1, starter: 0,
     sound: true, rules: false, debugOpen: false, debugTab: 'journal', tip: null, hintId: null,
-    roundEnd: null, bubble: null, history: [], debugLog: [], drawToast: null, reshuffleToast: null,
+    roundEnd: null, bubble: null, history: [], debugLog: [], drawToast: null, reshuffleToast: null, reshuffleCount: 0,
     message: '', mp: null, confirmLeave: false,
   };
   tk = 0;
@@ -837,7 +837,7 @@ class Component extends DCLogic {
   toastReshuffle() {
     this._rsToastK = (this._rsToastK || 0) + 1;
     const k = this._rsToastK;
-    this.setState({ reshuffleToast: '♻ Ablagestapel neu gmischt' });
+    this.setState({ reshuffleToast: '♻ Ablagestapel neu gmischt', reshuffleCount: (this.state.reshuffleCount || 0) + 1 });
     setTimeout(() => { if (this._rsToastK === k && this.mounted !== false) this.setState({ reshuffleToast: null }); }, 1600);
   }
 
@@ -1597,7 +1597,7 @@ class Component extends DCLogic {
         t: 'state', phase: s.phase, mySeat: i,
         seats: s.seats.map(x => ({ name: x.name, n: x.hand.length, said: x.said, status: x.status, score: x.score, rounds: x.rounds })),
         myHand: s.seats[i] ? s.seats[i].hand : [],
-        discard: s.discard.slice(-3), pileN: s.pile.length,
+        discard: s.discard.slice(-3), pileN: s.pile.length, rsN: s.reshuffleCount || 0,
         turn: s.turn, wish: s.wish, pending7: s.pending7, pendingWinner: s.pendingWinner, cover: s.cover, wisher: s.wisher,
         hasDrawn: s.turn === i ? s.hasDrawn : false,
         roundNum: s.roundNum, roundEnd: s.roundEnd,
@@ -1619,6 +1619,9 @@ class Component extends DCLogic {
     if (this.state.phase === 'play' && d.phase === 'play' && d.myHand.length > prevMine.length) {
       this.toastDraw(d.myHand.length - prevMine.length);
     }
+    const rsN = d.rsN || 0;
+    if (this._rsSeen == null) this._rsSeen = rsN;
+    else if (rsN > this._rsSeen) { this._rsSeen = rsN; this.toastReshuffle(); }
     const seats = d.seats.map((x, j) => ({
       ...x, kind: j === d.mySeat ? 'local' : 'remote',
       hand: j === d.mySeat ? d.myHand : Array.from({ length: x.n }, (_, q) => ({ id: 9000 + j * 100 + q, suit: 'rose', rank: '6' })),

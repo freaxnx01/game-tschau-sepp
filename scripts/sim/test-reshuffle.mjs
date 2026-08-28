@@ -198,4 +198,59 @@ function fresh() {
     c.state.reshuffleToast === '♻ Ablagestapel neu gmischt', JSON.stringify(c.state.reshuffleToast));
 }
 
+// ---------- Task 5: P2P parity ----------
+{
+  const c = fresh();
+  const before = c.state.reshuffleCount;
+  check('p2p: counter starts at 0', before === 0, JSON.stringify(before));
+  c.toastReshuffle();
+  check('p2p: counter increments on reshuffle', c.state.reshuffleCount === 1,
+    JSON.stringify(c.state.reshuffleCount));
+  c.toastReshuffle();
+  check('p2p: counter is monotonic', c.state.reshuffleCount === 2,
+    JSON.stringify(c.state.reshuffleCount));
+}
+
+{
+  // Guest side: applySnap must fire its own toast when the counter advances.
+  const c = fresh();
+  globalThis.window = globalThis.window || { innerHeight: 900, innerWidth: 1400 };
+  c.state.mode = 'guest';
+  c.state.phase = 'play';
+  const snap = {
+    t: 'state', phase: 'play', mySeat: 1,
+    seats: [
+      { name: 'Host', n: 5, said: false, status: 'ok', score: 0, rounds: 0 },
+      { name: 'Gast', n: 5, said: false, status: 'ok', score: 0, rounds: 0 },
+    ],
+    myHand: c.state.seats[1].hand.slice(0, 5),
+    discard: c.state.discard.slice(-3), pileN: 10,
+    turn: 0, wish: null, pending7: 0, pendingWinner: null, cover: null, wisher: null,
+    hasDrawn: false, roundNum: 1, roundEnd: null,
+    lastM: null, bubble: null, history: [], snd: null,
+    rsN: 0,
+  };
+  c.applySnap(snap);
+  check('p2p: no guest toast when the counter is unchanged',
+    !c.state.reshuffleToast, JSON.stringify(c.state.reshuffleToast));
+  c.applySnap({ ...snap, rsN: 1 });
+  check('p2p: guest toasts when the counter advances',
+    c.state.reshuffleToast === '♻ Ablagestapel neu gmischt', JSON.stringify(c.state.reshuffleToast));
+  c.setState({ reshuffleToast: null });
+  c.applySnap({ ...snap, rsN: 1 });
+  check('p2p: guest does not re-toast the same reshuffle',
+    !c.state.reshuffleToast, JSON.stringify(c.state.reshuffleToast));
+}
+
+{
+  // The host's snapshot must carry the counter.
+  const c = fresh();
+  c.state.mode = 'host';
+  c.state.reshuffleCount = 3;
+  let sent = null;
+  c.guests = { 1: { chan: { readyState: 'open', send: (payload) => { sent = JSON.parse(payload); } } } };
+  c.pushState();
+  check('p2p: host snapshot carries the counter', sent && sent.rsN === 3, JSON.stringify(sent && sent.rsN));
+}
+
 process.exit(failed ? 1 : 0);
