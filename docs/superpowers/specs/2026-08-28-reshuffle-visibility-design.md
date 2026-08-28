@@ -107,24 +107,31 @@ cards is one journal line, which is what a reader wants to see.
 ## 4 — P2P parity
 
 The reshuffle only ever executes on the host. The guest applies host state and
-must therefore be *told*. Two independent channels, because the existing code
-already treats them separately:
+must therefore be *told*.
 
-**Banner text** — a new `msgText` key `reshuffled` (`:500 ff.`):
+**Mechanism: a monotonic `reshuffleCount`** in component state, incremented on
+every recycle and added to the host's sync payload (`:1568`, alongside the
+existing `discard`/`pileN`). The guest keeps the last count it saw and fires its
+own toast whenever the received count is greater. This mirrors how the guest
+already derives its draw toast from a hand-size delta (`:1588`) rather than from
+an event.
 
-```
-mine/other (perspective-independent): 'Ablagestapel neu gmischt.'
-```
+**Rejected: routing the notice through `lastM`.** The obvious-looking
+alternative is a new `msgText` key set via `this.M()`, which the host already
+syncs (`:1572`) and the guest already renders into its banner (`:1599`). It is
+rejected for two reasons:
 
-Set through `this.M()`, so it lands in `lastM`, which the host already syncs
-(`:1572`) and the guest already renders into its banner (`:1599`). No new
-plumbing.
+1. `this.M()` writes the **host's own banner** as a side effect. The reshuffle
+   happens mid-draw, so the host would get a reshuffle text flashing over its
+   turn banner and being overwritten a few hundred milliseconds later by the
+   caller's own message — exactly the behaviour that was considered and rejected
+   for the local display. The code path is shared; the host cannot opt out.
+2. Delivery is timing-dependent. `pushState` is debounced 30 ms by `queuePush`
+   (`:455`), so whether the guest ever observes that `lastM` value depends on
+   the gap between the reshuffle and the caller's next message. The counter has
+   no such dependency: it is state, so any later snapshot still carries it.
 
-**Toast** — a monotonic `reshuffleCount` is added to the host's sync payload
-(`:1568`, alongside the existing `discard`/`pileN`). The guest fires its own
-toast when the received count is greater than the last one it saw. This mirrors
-how the guest already derives its draw toast from a hand-size delta (`:1588`)
-rather than from an event.
+The counter is therefore the only P2P channel, and no `msgText` key is added.
 
 The journal stays local: `debugLog` is not in the sync payload and is not being
 added to it.
@@ -164,6 +171,8 @@ parity and runs both in the repo-local pre-commit hook and in CI
 - The debug journal logs every draw (who, how many) and every reshuffle (how
   many cards were recycled).
 - Existing card entries in the journal render exactly as before.
-- In P2P, the guest sees both the banner text and its own reshuffle toast.
+- In P2P, the guest shows its own reshuffle toast, driven by `reshuffleCount`.
+- No code path writes the banner message on reshuffle — the host's turn banner
+  is unaffected.
 - `recycleDiscard` is the only place the discard pile is recycled.
 - New and existing sim tests pass; `index.html` is in sync with the source.
