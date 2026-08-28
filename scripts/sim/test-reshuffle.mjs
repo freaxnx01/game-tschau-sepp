@@ -161,4 +161,41 @@ function fresh() {
   check('render: one row per entry', rows.length === 4, 'rows=' + rows.length);
 }
 
+// ---------- Task 4: reshuffle toast ----------
+{
+  const c = fresh();
+  globalThis.window = globalThis.window || { innerHeight: 900, innerWidth: 1400 };
+  c.state.mySeat = 0;
+  const moved = c.state.pile.splice(0, c.state.pile.length);
+  c.state.discard = c.state.discard.concat(moved);
+  c.drawCards(0, 1);
+  check('toast: set for the local player on reshuffle',
+    c.state.reshuffleToast === '♻ Ablagestapel neu gmischt', JSON.stringify(c.state.reshuffleToast));
+  const vm = c.renderVals();
+  check('toast: exposed by renderVals', vm.showReshuffleToast === true, JSON.stringify(vm.showReshuffleToast));
+  check('toast: text exposed by renderVals',
+    vm.reshuffleToastText === '♻ Ablagestapel neu gmischt', JSON.stringify(vm.reshuffleToastText));
+  check('toast: sits clear of the draw toast',
+    typeof vm.reshuffleToastBottom === 'number' && vm.reshuffleToastBottom > vm.drawToastBottom,
+    vm.reshuffleToastBottom + ' vs ' + vm.drawToastBottom);
+}
+
+{
+  const c = fresh();
+  c.state.mySeat = 0;
+  c.drawCards(0, 1); // no recycle needed
+  check('toast: not set when nothing was recycled',
+    !c.state.reshuffleToast, JSON.stringify(c.state.reshuffleToast));
+}
+
+{
+  const c = fresh();
+  c.state.mySeat = 0;
+  const moved = c.state.pile.splice(0, c.state.pile.length);
+  c.state.discard = c.state.discard.concat(moved);
+  c.drawCards(1, 1); // the OTHER seat draws — reshuffle is still table-wide news
+  check('toast: shown even when another seat triggered the reshuffle',
+    c.state.reshuffleToast === '♻ Ablagestapel neu gmischt', JSON.stringify(c.state.reshuffleToast));
+}
+
 process.exit(failed ? 1 : 0);
