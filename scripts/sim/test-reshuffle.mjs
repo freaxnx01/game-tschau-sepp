@@ -141,4 +141,24 @@ function fresh() {
     c.state.debugLog.length === 0, JSON.stringify(c.state.debugLog));
 }
 
+// ---------- Task 3: journal rendering ----------
+{
+  const c = fresh();
+  // renderVals() reads layout globals; provide the minimum the existing sim host lacks.
+  globalThis.window = globalThis.window || { innerHeight: 900, innerWidth: 1400 };
+  c.state.debugTab = 'journal';
+  c.state.debugLog = [
+    { seat: 1, suit: 'schilte', rank: '8', effect: 'übersprunge' },
+    { kind: 'draw', seat: 1, n: 4 },
+    { kind: 'draw', seat: 0, n: 1 },
+    { kind: 'reshuffle', n: 28 },
+  ];
+  const rows = c.renderVals().journalRows.map(r => r.text);
+  check('render: card entry unchanged', rows[0] === 'Bot-B: Achti Schilte — übersprunge', rows[0]);
+  check('render: plural draw entry', rows[1] === 'Bot-B: zieht 4 Charte', rows[1]);
+  check('render: singular draw entry uses "e Charte"', rows[2] === 'Du: zieht e Charte', rows[2]);
+  check('render: reshuffle entry', rows[3] === '♻ Ablagestapel neu gmischt (28 Charte)', rows[3]);
+  check('render: one row per entry', rows.length === 4, 'rows=' + rows.length);
+}
+
 process.exit(failed ? 1 : 0);

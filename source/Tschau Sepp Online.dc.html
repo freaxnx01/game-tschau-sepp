@@ -1730,7 +1730,9 @@ class Component extends DCLogic {
     const discardW = Math.round(W * 1.35);
     const discardCX = Math.round(W * 0.87);
     const journalRows = s.debugLog.map(e => {
+      if (e.kind === 'reshuffle') return { text: '♻ Ablagestapel neu gmischt (' + e.n + ' Charte)' };
       const who = this.nm(e.seat, my, seats);
+      if (e.kind === 'draw') return { text: who + ': zieht ' + (e.n === 1 ? 'e' : e.n) + ' Charte' };
       const card = this.rankName(e.rank) + ' ' + this.suitName(e.suit);
       return { text: who + ': ' + card + (e.effect ? ' — ' + e.effect : '') };
     });
