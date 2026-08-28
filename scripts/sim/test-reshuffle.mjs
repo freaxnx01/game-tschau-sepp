@@ -88,4 +88,57 @@ function fresh() {
     before + ' -> ' + after);
 }
 
+// ---------- Task 2: journal entries ----------
+{
+  const c = fresh();
+  c.state.debugLog = [];
+  const moved = c.state.pile.splice(0, c.state.pile.length);
+  c.state.discard = c.state.discard.concat(moved);
+  const recycled = c.state.discard.length - 1;
+  c.drawCards(1, 2);
+  const log = c.state.debugLog;
+  const rs = log.filter(e => e.kind === 'reshuffle');
+  const dr = log.filter(e => e.kind === 'draw');
+  check('journal: exactly one reshuffle entry', rs.length === 1, 'got ' + rs.length);
+  check('journal: reshuffle entry counts the recycled cards', rs.length === 1 && rs[0].n === recycled,
+    JSON.stringify(rs));
+  check('journal: exactly one draw entry', dr.length === 1, 'got ' + dr.length);
+  check('journal: draw entry carries seat and total', dr.length === 1 && dr[0].seat === 1 && dr[0].n === 2,
+    JSON.stringify(dr));
+  check('journal: reshuffle is logged before the draw it enabled',
+    log.findIndex(e => e.kind === 'reshuffle') < log.findIndex(e => e.kind === 'draw'),
+    JSON.stringify(log.map(e => e.kind)));
+}
+
+{
+  const c = fresh();
+  c.state.debugLog = [];
+  c.drawCards(0, 3); // plenty of pile left — no recycle expected
+  check('journal: no reshuffle entry when the pile suffices',
+    c.state.debugLog.filter(e => e.kind === 'reshuffle').length === 0,
+    JSON.stringify(c.state.debugLog));
+  check('journal: draw entry still recorded',
+    c.state.debugLog.filter(e => e.kind === 'draw' && e.n === 3).length === 1,
+    JSON.stringify(c.state.debugLog));
+}
+
+{
+  const c = fresh();
+  c.state.debugLog = [];
+  // drawUntilCover logs its own draw entry with the number it actually pulled.
+  const r = c.drawUntilCover(0);
+  const dr = c.state.debugLog.filter(e => e.kind === 'draw');
+  check('journal: drawUntilCover logs one draw entry', dr.length === 1, JSON.stringify(c.state.debugLog));
+  check('journal: drawUntilCover draw entry matches the drawn count',
+    dr.length === 1 && dr[0].n === r.n && dr[0].seat === 0, JSON.stringify(dr) + ' vs n=' + r.n);
+}
+
+{
+  const c = fresh();
+  c.state.debugLog = [];
+  c.drawCards(0, 0); // nothing drawn
+  check('journal: drawing zero cards logs nothing',
+    c.state.debugLog.length === 0, JSON.stringify(c.state.debugLog));
+}
+
 process.exit(failed ? 1 : 0);
