@@ -138,6 +138,11 @@
         <div style="position: absolute; left: 50%; bottom: {{ drawToastBottom }}px; transform: translateX(-50%); background: rgba(124,31,38,0.92); color: #f6efd9; font-size: 28px; font-weight: 900; padding: 6px 24px; border-radius: 30px; border: 2px solid #f0c243; box-shadow: 0 6px 16px rgba(0,0,0,0.45); z-index: 26; pointer-events: none; animation: popIn 0.25s; white-space: nowrap;">{{ drawToastText }} <span style="font-size: 17px; font-weight: 600; font-style: italic;">Charte</span></div>
       </sc-if>
 
+      <!-- Reshuffle toast -->
+      <sc-if value="{{ showReshuffleToast }}" hint-placeholder-val="{{ false }}">
+        <div style="position: absolute; left: 50%; bottom: {{ reshuffleToastBottom }}px; transform: translateX(-50%); background: rgba(49,105,74,0.94); color: #f6efd9; font-size: 17px; font-weight: 700; padding: 6px 20px; border-radius: 30px; border: 2px solid #f0c243; box-shadow: 0 6px 16px rgba(0,0,0,0.45); z-index: 26; pointer-events: none; animation: popIn 0.25s; white-space: nowrap;">{{ reshuffleToastText }}</div>
+      </sc-if>
+
       <!-- Passe button -->
       <sc-if value="{{ showPasse }}" hint-placeholder-val="{{ false }}">
         <button onClick="{{ passTurn }}" style="position: absolute; left: calc(50% - {{ pileGap }}px); top: {{ passeTop }}px; transform: translateX(-50%); font-family: inherit; font-size: 17px; font-weight: 700; color: #f3ead2; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 2px solid #3a2512; border-radius: 10px; padding: 8px 22px; cursor: pointer; box-shadow: 0 3px 8px rgba(0,0,0,0.4); z-index: 20;" style-hover="filter: brightness(1.15);">Passe</button>
@@ -438,7 +443,7 @@ class Component extends DCLogic {
     hasDrawn: false,
     roundNum: 1, starter: 0,
     sound: true, rules: false, debugOpen: false, debugTab: 'journal', tip: null, hintId: null,
-    roundEnd: null, bubble: null, history: [], debugLog: [], drawToast: null,
+    roundEnd: null, bubble: null, history: [], debugLog: [], drawToast: null, reshuffleToast: null,
     message: '', mp: null, confirmLeave: false,
   };
   tk = 0;
@@ -721,7 +726,7 @@ class Component extends DCLogic {
     if (!seats[first] || seats[first].status !== 'ok') first = this.nextOk(first, seats);
     this.setState({
       phase: 'play', seats, pile, discard: [flip], turn: first, wish: null, wisher: null, cover: null, pending7: 0, sevenChain: 0, pendingWinner: null,
-      hasDrawn: false, drawToast: null, bubble: null, roundEnd: null, rules: false, history: [], debugLog: [], tip: null, hintId: null,
+      hasDrawn: false, drawToast: null, reshuffleToast: null, bubble: null, roundEnd: null, rules: false, history: [], debugLog: [], tip: null, hintId: null,
       message: this.M(first, 'start'),
     });
     this.snd('deal');
@@ -829,6 +834,13 @@ class Component extends DCLogic {
     setTimeout(() => { if (this._toastK === k && this.mounted !== false) this.setState({ drawToast: null }); }, 1600);
   }
 
+  toastReshuffle() {
+    this._rsToastK = (this._rsToastK || 0) + 1;
+    const k = this._rsToastK;
+    this.setState({ reshuffleToast: '♻ Ablagestapel neu gmischt' });
+    setTimeout(() => { if (this._rsToastK === k && this.mounted !== false) this.setState({ reshuffleToast: null }); }, 1600);
+  }
+
   // Ziehstapel läär: dr Ablagestapel (ohni die oberschti Charte) wird neu gmischt
   // und zum neue Ziehstapel. Ei einzigi Stell — Toast, Journal und dr P2P-Zähler
   // hänged all dra.
@@ -860,6 +872,7 @@ class Component extends DCLogic {
     if (n) entries.push({ kind: 'draw', seat: who, n });
     const seats = s.seats.map((x, i) => i === who ? { ...x, hand, said: hand.length === 1 ? x.said : false } : x);
     this.setState({ pile, discard, seats, debugLog: s.debugLog.concat(entries) });
+    if (entries.some(e => e.kind === 'reshuffle')) this.toastReshuffle();
     if (who === s.mySeat) this.toastDraw(n);
     return { found, n };
   }
@@ -882,6 +895,7 @@ class Component extends DCLogic {
     if (got.length) entries.push({ kind: 'draw', seat: who, n: got.length });
     const seats = s.seats.map((x, i) => i === who ? { ...x, hand, said: hand.length === 1 ? x.said : false } : x);
     this.setState({ pile, discard, seats, debugLog: s.debugLog.concat(entries) });
+    if (entries.some(e => e.kind === 'reshuffle')) this.toastReshuffle();
     if (who === s.mySeat) this.toastDraw(got.length);
     return got;
   }
@@ -1841,6 +1855,7 @@ class Component extends DCLogic {
       tschauBottom: H + 76,
       tipBottom: H + 84,
       drawToastBottom: H + 30,
+      reshuffleToastBottom: H + 96,
       backUri: this.backUri(),
       // top bar
       chips,
@@ -1867,6 +1882,8 @@ class Component extends DCLogic {
       showPasse: myTurn && s.hasDrawn && s.cover == null,
       showDrawToast: !!s.drawToast && s.phase === 'play',
       drawToastText: s.drawToast || '',
+      showReshuffleToast: !!s.reshuffleToast && s.phase === 'play',
+      reshuffleToastText: s.reshuffleToast || '',
       showRoundEndCard: !!(re && re.card),
       roundEndCardUri: re && re.card ? this.face(re.card) : '',
       showRoundEndCards: reCards.length > 0,
