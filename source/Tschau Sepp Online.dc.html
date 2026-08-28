@@ -829,6 +829,16 @@ class Component extends DCLogic {
     setTimeout(() => { if (this._toastK === k && this.mounted !== false) this.setState({ drawToast: null }); }, 1600);
   }
 
+  // Ziehstapel läär: dr Ablagestapel (ohni die oberschti Charte) wird neu gmischt
+  // und zum neue Ziehstapel. Ei einzigi Stell — Toast, Journal und dr P2P-Zähler
+  // hänged all dra.
+  recycleDiscard(pile, discard) {
+    if (discard.length <= 1) return { pile, discard, reshuffled: false, n: 0 };
+    const rest = discard.slice(0, -1);
+    const top = discard[discard.length - 1];
+    return { pile: this.shuffleArr(rest), discard: [top], reshuffled: true, n: rest.length };
+  }
+
   drawUntilCover(who) {
     const s = this.state;
     let pile = s.pile.slice(), discard = s.discard.slice();
@@ -838,8 +848,9 @@ class Component extends DCLogic {
     let found = null, n = 0;
     while (!found) {
       if (!pile.length) {
-        if (discard.length > 1) { const top = discard.pop(); pile = this.shuffleArr(discard); discard = [top]; }
-        else break;
+        const rc = this.recycleDiscard(pile, discard);
+        if (!rc.reshuffled) break;
+        pile = rc.pile; discard = rc.discard;
       }
       const c = pile.pop(); hand.push(c); n++;
       if (covers(c)) found = c;
@@ -857,8 +868,9 @@ class Component extends DCLogic {
     const got = [];
     for (let i = 0; i < n; i++) {
       if (!pile.length) {
-        if (discard.length > 1) { const top = discard.pop(); pile = this.shuffleArr(discard); discard = [top]; }
-        else break;
+        const rc = this.recycleDiscard(pile, discard);
+        if (!rc.reshuffled) break;
+        pile = rc.pile; discard = rc.discard;
       }
       const c = pile.pop(); hand.push(c); got.push(c);
     }
