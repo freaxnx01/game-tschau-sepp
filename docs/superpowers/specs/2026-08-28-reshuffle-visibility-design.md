@@ -28,9 +28,15 @@ Make the reshuffle observable, in three places:
 2. Debug-journal entries for draws and for reshuffles.
 3. Parity for the P2P guest, who never runs the reshuffle themselves.
 
+and one behavioural change to the reshuffle itself (§ 1b): recently played
+cards are pushed to the bottom of the new draw pile instead of landing anywhere
+in it. The visibility work explains a recycled card; the ordering rule stops
+the most jarring case from happening in the first place.
+
 **Out of scope** (deliberately, recorded so it is not re-litigated):
 
-- Changing the reshuffle *rule*. Recycling the discard pile stays.
+- Changing *whether* the discard pile is recycled. Recycling stays; only the
+  **order** the recycled cards come back in changes (§ 1b).
 - Syncing `debugLog` across P2P. The journal stays local to each peer.
 - i18n. The game is Swiss German throughout; this adds strings in the same
   voice and nothing else.
@@ -59,10 +65,58 @@ and the callers keep their existing `break`.
 
 This is a prerequisite, not a cleanup: toast, journal entry and P2P counter all
 need a single trigger. Three copies of the trigger is how the next one drifts.
+The cooldown ordering (§ 1b) is a fourth reason: an ordering rule split across
+two call sites is an ordering rule that will only hold on one of them.
 
 The helper does **not** call `setState` and does **not** emit the toast or the
 journal entry itself — it is a pure function over the two piles, so the sim
 harness can call it directly. The callers decide what to surface.
+
+## 1b — Cooldown: recently played cards go to the bottom
+
+Even with the toast, the reported case stays unpleasant: the 8 Schilte is
+played, the pile runs dry a moment later, and the same 8 Schilte is dealt
+straight back into a hand. Uniform shuffling makes that as likely as any other
+position. The recycled cards are already in chronological order — `discard` is
+push-appended as cards are played — so the ordering is free information the
+shuffle currently throws away.
+
+`recycleDiscard` therefore splits the cards it recycles in two before shuffling:
+
+```text
+discard (oldest → newest):  [ ...... rest ...... ][ cooldown ][ top ]
+                                        │              │         └ stays on the discard pile
+                                        ↓              ↓
+new pile:                   [ shuffle(cooldown) ][ shuffle(rest) ]
+                              ↑ index 0 = bottom      ↑ end = top, where pop() draws
+```
+
+`pile.pop()` draws from the end of the array, so the cooldown block sits at the
+bottom and is drawn last. **`COOLDOWN_MAX = 8`** — roughly one full turn around
+a four-seat table, which covers the reported run without constraining much of
+the deck.
+
+Both halves are still shuffled internally. Nothing becomes predictable: a
+player learns only that the handful of cards they just watched being played are
+unlikely to reappear immediately, which is the intuition a physical deck
+already gives them.
+
+**Small piles degrade to today's behaviour.** A recycle of five cards cannot
+hold eight back, and holding back *everything* would make the new pile a
+reversed replay of the old one. The cooldown size is therefore
+
+```js
+Math.min(COOLDOWN_MAX, Math.floor(recycled.length / 2))
+```
+
+It never exceeds half the pile, and is `0` when a single card is recycled — an
+ordinary uniform shuffle, no special-casing at the call sites. A three-card
+recycle holds back one card; that is small but correct, and the half-cap is
+what keeps the new pile from being a reversed replay of the old one.
+
+This is the only behavioural change in the feature. It changes which card comes
+back when, never *whether* the discard pile is recycled, and never the card
+count: the split is a partition, so the 36-card invariant is untouched.
 
 ## 2 — Toast
 
@@ -152,6 +206,14 @@ Tests go there, TDD-first, in a new `scripts/sim/test-reshuffle.mjs`:
 - `journalRows` renders each of the three entry kinds correctly, including the
   `n === 1` singular form and the card entries that carry no `kind`.
 - The 36-card invariant holds across a reshuffle.
+- Cooldown: after recycling a pile of known cards, none of the last
+  `COOLDOWN_MAX` played cards appears in the top half of the new draw pile.
+- Cooldown: both halves are genuinely shuffled — a fixed input must not always
+  produce the same output order (run the split repeatedly and assert more than
+  one distinct ordering), so the rule cannot silently degrade into
+  "append in reverse".
+- Cooldown: a three-card recycle degrades to a plain uniform shuffle without
+  throwing, and still conserves the card count.
 
 `scripts/sim/test-guard.mjs` and `scripts/sim/harness.mjs` must stay green —
 the harness is the regression net for the deck invariant this issue was
@@ -175,4 +237,8 @@ parity and runs both in the repo-local pre-commit hook and in CI
 - No code path writes the banner message on reshuffle — the host's turn banner
   is unaffected.
 - `recycleDiscard` is the only place the discard pile is recycled.
+- The last `COOLDOWN_MAX` (8) played cards land in the bottom half of the new
+  draw pile, so neither the player nor a CPU can draw them immediately after a
+  reshuffle; on piles too small to split, behaviour is the previous uniform
+  shuffle.
 - New and existing sim tests pass; `index.html` is in sync with the source.

@@ -433,6 +433,7 @@
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;tischfarbe&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#31694a&quot;, &quot;options&quot;: [&quot;#31694a&quot;, &quot;#27516b&quot;, &quot;#6d2a33&quot;, &quot;#3d3d52&quot;], &quot;section&quot;: &quot;Tisch&quot;}, &quot;kartegroessi&quot;: {&quot;editor&quot;: &quot;range&quot;, &quot;default&quot;: 1, &quot;min&quot;: 0.8, &quot;max&quot;: 1.3, &quot;step&quot;: 0.05, &quot;tsType&quot;: &quot;number&quot;, &quot;section&quot;: &quot;Charte&quot;}, &quot;startcharte&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;5&quot;, &quot;options&quot;: [&quot;5&quot;, &quot;7&quot;], &quot;section&quot;: &quot;Charte&quot;}}">
 class Component extends DCLogic {
+  static COOLDOWN_MAX = 8; // so viel zletscht gspiilti Charte chömed bim Mische zunderscht
   state = {
     phase: 'menu', // menu | play | wish | roundEnd
     mode: 'bot', // bot | host | guest
@@ -846,11 +847,20 @@ class Component extends DCLogic {
   // Ziehstapel läär: dr Ablagestapel (ohni die oberschti Charte) wird neu gmischt
   // und zum neue Ziehstapel. Ei einzigi Stell — Toast, Journal und dr P2P-Zähler
   // hänged all dra.
+  //
+  // Cooldown: dr Ablagestapel isch chronologisch, drum chömed die zletscht
+  // gspiilte Charte zunderscht i nöie Stapel und werded erscht spöter wieder
+  // zoge. `pop()` zieht am Ändi vom Array — Index 0 isch also dr Bode.
+  // Beidi Hälfte werded für sich gmischt; dr Cooldown isch uf d'Hälfti vom
+  // Stapel beschränkt, demit ä chliine Stapel nid eifach rückwärts zrugg chunnt.
   recycleDiscard(pile, discard) {
     if (discard.length <= 1) return { pile, discard, reshuffled: false, n: 0 };
     const rest = discard.slice(0, -1);
     const top = discard[discard.length - 1];
-    return { pile: this.shuffleArr(rest), discard: [top], reshuffled: true, n: rest.length };
+    const cool = Math.min(Component.COOLDOWN_MAX, Math.floor(rest.length / 2));
+    const cooldown = this.shuffleArr(rest.slice(rest.length - cool));
+    const older = this.shuffleArr(rest.slice(0, rest.length - cool));
+    return { pile: cooldown.concat(older), discard: [top], reshuffled: true, n: rest.length };
   }
 
   drawUntilCover(who) {
