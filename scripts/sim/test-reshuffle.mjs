@@ -3,6 +3,7 @@
 //   - draws and reshuffles are recorded in the debug journal
 //   - journalRows() renders all three entry kinds
 //   - the P2P guest is told about a reshuffle via a monotonic counter
+//   - recently played cards land at the bottom of the recycled draw pile
 import fs from 'node:fs';
 
 // Usage: node scripts/sim/test-reshuffle.mjs [source-or-index.html]
@@ -251,6 +252,62 @@ function fresh() {
   c.guests = { 1: { chan: { readyState: 'open', send: (payload) => { sent = JSON.parse(payload); } } } };
   c.pushState();
   check('p2p: host snapshot carries the counter', sent && sent.rsN === 3, JSON.stringify(sent && sent.rsN));
+}
+
+// ---------- Cooldown: recently played cards go to the bottom ----------
+{
+  const c = fresh();
+  // 20 recycled cards + 1 top card. Cooldown = min(COOLDOWN_MAX, floor(20/2)) = 8,
+  // so ids 13..20 — the 8 most recently played — must sit in the bottom half.
+  const discard = Array.from({ length: 21 }, (_, i) => ({ id: i + 1 }));
+  const r = c.recycleDiscard([], discard);
+  const recent = new Set([13, 14, 15, 16, 17, 18, 19, 20]);
+  const topHalf = r.pile.slice(r.pile.length / 2).map(x => x.id);
+  check('cooldown: recent cards are not in the top half of the new pile',
+    topHalf.every(id => !recent.has(id)), 'topHalf=' + JSON.stringify(topHalf));
+  const bottom = r.pile.slice(0, 8).map(x => x.id).sort((a, b) => a - b);
+  check('cooldown: the 8 most recent cards form the bottom block',
+    JSON.stringify(bottom) === JSON.stringify([13, 14, 15, 16, 17, 18, 19, 20]),
+    JSON.stringify(bottom));
+  check('cooldown: still conserves cards', r.pile.length === 20 && r.n === 20,
+    r.pile.length + '/' + r.n);
+}
+
+{
+  // Both halves must really be shuffled — a deterministic order would mean the
+  // rule degenerated into "append in reverse".
+  const c = fresh();
+  const discard = Array.from({ length: 21 }, (_, i) => ({ id: i + 1 }));
+  const seen = new Set();
+  for (let i = 0; i < 30; i++) seen.add(c.recycleDiscard([], discard).pile.map(x => x.id).join(','));
+  check('cooldown: the new pile order varies between recycles', seen.size > 1, 'distinct=' + seen.size);
+}
+
+{
+  // Too small for a full block: 3 recycled cards -> cool = min(8, floor(3/2)) = 1.
+  // The half-cap, not COOLDOWN_MAX, is what applies here.
+  const c = fresh();
+  const discard = [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+  const r = c.recycleDiscard([], discard);
+  check('cooldown: small pile is capped at half, not COOLDOWN_MAX',
+    r.reshuffled === true && r.n === 3, JSON.stringify({ reshuffled: r.reshuffled, n: r.n }));
+  const ids = [...r.pile, ...r.discard].map(x => x.id).sort();
+  check('cooldown: small pile conserves cards',
+    JSON.stringify(ids) === JSON.stringify([1, 2, 3, 4]), JSON.stringify(ids));
+}
+
+{
+  // The rule must survive a real draw: no card played in the last few turns may
+  // come back in the first cards drawn after the reshuffle.
+  const c = fresh();
+  const moved = c.state.pile.splice(0, c.state.pile.length);
+  c.state.discard = c.state.discard.concat(moved);
+  const recent = new Set(c.state.discard.slice(-9, -1).map(x => x.id));
+  const before = c.state.seats[0].hand.length;
+  c.drawCards(0, 4);
+  const drawn = c.state.seats[0].hand.slice(before).map(x => x.id);
+  check('cooldown: a real draw after a reshuffle returns no recent card',
+    drawn.every(id => !recent.has(id)), 'drawn=' + JSON.stringify(drawn));
 }
 
 process.exit(failed ? 1 : 0);

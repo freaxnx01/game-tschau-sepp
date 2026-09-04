@@ -12,6 +12,10 @@ All notable changes to this project are documented here, following
 - Reshuffling the discard pile now shows a "♻ Ablagestapel neu gmischt" toast, including for the P2P guest (#13)
 - Debug journal records draws (who, how many) and reshuffles (#13)
 
+### Changed
+
+- Reshuffling the discard pile now sends the most recently played cards to the bottom of the new draw pile, so they are no longer dealt straight back out (#13)
+
 ### Fixed
 
 - Debug dialog closes on ESC, along with the Rules and confirm-leave dialogs (#9)
