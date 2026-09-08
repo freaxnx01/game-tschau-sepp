@@ -17,6 +17,9 @@ jobs:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
     with:
       issue-number: ${{ github.event.issue.number }}
+      # Keep the shared scripts on the same ref as the workflow pinned above:
+      # pipeline-ref defaults to main, which drifts from @v1 and breaks the run.
+      pipeline-ref: v1
       runner-labels: '["ubuntu-latest"]'
       default-model: z-ai/glm-5.2
       max-turns: 60
