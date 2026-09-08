@@ -1112,10 +1112,17 @@ class Component extends DCLogic {
     const s = this.state;
     if (s.phase !== 'play' || s.turn !== who || s.hasDrawn) return;
     if (s.cover === who) {
-      const r = this.drawUntilCover(who);
+      // Ei Charte pro Klick: dr Spiler luegt sie aa und entscheidet sälber, ob
+      // er wiiterzieht oder e Deckig us dr Hand spielt (z.B. dr Under spare).
+      const got = this.drawCards(who, 1);
+      if (!got.length) {
+        this.setState({ message: this.M(who, 'coverFail') });
+        this.after(900, () => this.nextTurn(who, { rank: 'x' }));
+        return;
+      }
       this.snd('draw');
-      if (r.found) this.setState({ hasDrawn: true, message: this.M(who, 'coverDrawn', r.n) });
-      else { this.setState({ message: this.M(who, 'coverFail') }); this.after(900, () => this.nextTurn(who, { rank: 'x' })); }
+      const canCover = this.state.seats[who].hand.some(c => this.canPlay(c));
+      this.setState({ message: this.M(who, canCover ? 'coverDrawn' : 'coverPrompt', 1) });
       return;
     }
     const n = Math.max(1, s.pending7);
