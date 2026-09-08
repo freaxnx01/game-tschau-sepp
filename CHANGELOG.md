@@ -18,6 +18,7 @@ All notable changes to this project are documented here, following
 
 ### Fixed
 
+- The "Nöd optimal" tip no longer recommends a move that strands an unplayable card, such as playing an 8 and keeping a bare Ass (#17)
 - Debug dialog closes on ESC, along with the Rules and confirm-leave dialogs (#9)
 - Debug "Cards" tab tooltip now names who discarded a card (#9)
 - Covering an Ass now draws one card per click instead of force-drawing until a cover appears, so you can look at each card and decide whether to spend a cover you already hold (e.g. the Under)
