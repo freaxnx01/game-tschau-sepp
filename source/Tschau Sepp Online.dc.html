@@ -1137,7 +1137,12 @@ class Component extends DCLogic {
           this.after(600, () => this.endRound(w));
           return;
         }
-        // dr Gwinner sälber het müesse zieh (het ja kei Charte) — Rundä gaht wieter
+        // Dr Gwinner sälber het müesse zieh. Het er Charte übercho, gaht d Rundä
+        // wiiter; isch dr Stapel läär, cha si nümme glöst werde — sofort beende.
+        if (!got.length) {
+          this.endRound(w);
+          return;
+        }
       }
     }
     if (!got.length) { this.setState({ message: this.M(who, 'noCards') }); this.after(700, () => this.nextTurn(who, { rank: 'x' })); return; }
