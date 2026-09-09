@@ -1194,7 +1194,10 @@ class Component extends DCLogic {
     }
     sc += others.filter(o => o.suit === c.suit).length * 4;
     sc += (P[c.rank] || 0) * 0.4;
-    if (this.strandedHand(others)) sc -= Component.STRANDED_PENALTY;
+    // Bim Ass isch `others` erscht e Zwüschestand — d Pflicht-Deckig wird grad
+    // druf gspielt. Drum bewertet moveScore() dört d würkligi Restehand; hie
+    // würd s doppelt zelle.
+    if (c.rank !== 'A' && this.strandedHand(others)) sc -= Component.STRANDED_PENALTY;
     return sc;
   }
   // Bewerte dr ganz Zug, nöd nur d Charte: es Ass zieht en erzwungeni Deckig
@@ -1205,7 +1208,9 @@ class Component extends DCLogic {
     if (c.rank !== 'A') return sc;
     const afterHand = hand.filter(o => o.id !== c.id);
     const coverCands = afterHand.filter(o => o.rank === 'A' || o.rank === 'U' || o.suit === c.suit);
-    if (!coverCands.length) return sc;
+    // Ohni Deckig blibt d Hand eso, wie sie isch — scoreCard() het dr Abzug
+    // fürs blutte Ass scho gmacht, aber d Sackgass no nöd.
+    if (!coverCands.length) return this.strandedHand(afterHand) ? sc - Component.STRANDED_PENALTY : sc;
     const bestCover = coverCands.reduce((a, b) =>
       this.scoreCard(b, afterHand, s) > this.scoreCard(a, afterHand, s) ? b : a);
     const rest = afterHand.filter(o => o.id !== bestCover.id);
