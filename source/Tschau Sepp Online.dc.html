@@ -1137,7 +1137,13 @@ class Component extends DCLogic {
           this.after(600, () => this.endRound(w));
           return;
         }
-        // dr Gwinner sälber het müesse zieh (het ja kei Charte) — Rundä gaht wieter
+        // Dr Gwinner sälber het müesse zieh. Het er Charte übercho, gaht d Rundä
+        // wiiter; isch dr Stapel läär, cha si nümme glöst werde — Rundä beende.
+        if (!got.length) {
+          this.setState({ bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
+          this.after(600, () => this.endRound(w));
+          return;
+        }
       }
     }
     if (!got.length) { this.setState({ message: this.M(who, 'noCards') }); this.after(700, () => this.nextTurn(who, { rank: 'x' })); return; }
@@ -1244,12 +1250,14 @@ class Component extends DCLogic {
       return;
     }
     if (!cand.length && s.pending7 > 0) {
-      this.drawCards(me, s.pending7);
+      const got = this.drawCards(me, s.pending7);
       this.snd('draw');
       const pw = s.pendingWinner;
       this.setState({ pending7: 0, sevenChain: 0, pendingWinner: null, message: this.M(me, 'drewN', { n: s.pending7, chain: s.sevenChain }) });
-      if (pw != null && pw !== me) {
-        // Chain isch bim Bot brochen worde, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
+      // Glich wie bi drawFor(): d Chain isch brochen, wenn en andere Sitz zieht —
+      // oder wenn dr Gwinner sälber zieht, aber dr Stapel nüt meh hergit.
+      if (pw != null && (pw !== me || !got.length)) {
+        // Chain isch brochen, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
         this.setState({ bubble: { seat: pw, text: 'Sepp!' }, message: this.M(pw, 'sepp') });
         this.after(600, () => this.endRound(pw));
         return;
