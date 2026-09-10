@@ -1,0 +1,43 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # Every suite runs even if an earlier one fails, so one break cannot hide
+      # the state of the others. The glob picks up new suites automatically.
+      - name: Run the sim test suites
+        run: |
+          status=0
+          shopt -s nullglob
+          for t in scripts/sim/test-*.mjs; do
+            echo "::group::$t"
+            if node "$t"; then
+              echo "OK   $t"
+            else
+              echo "FAIL $t"
+              status=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $status
+
+      # Deterministic: harness.mjs seeds mulberry32 with 0xC0FFEE ^ gameIdx,
+      # so a failure here is a real regression, not flake.
+      - name: Verify the 36-card invariant
+        run: |
+          out=$(node scripts/sim/harness.mjs '' 300 20)
+          echo "$out"
+          echo "$out" | grep -qE '"violations": 0' || { echo "invariant violations"; exit 1; }
+          echo "$out" | grep -qE '"stalls": 0'     || { echo "harness stalled";      exit 1; }
