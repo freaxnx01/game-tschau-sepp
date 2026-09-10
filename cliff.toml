@@ -1,4 +1,21 @@
 # git-cliff configuration — Conventional Commits -> Keep a Changelog.
+#
+# IMPORTANT: CHANGELOG.md is hand-curated. Its entries are user-facing prose
+# ("Covering an Ass now draws one card per click..."), not commit subjects, and
+# they are worth more to a reader than what this config can generate.
+#
+# So do NOT run `git cliff --tag vX.Y.Z -o CHANGELOG.md` — that regenerates the
+# whole file from commit subjects and destroys the curation. At v0.3.0 it would
+# have replaced the curated entries with "Add favicon" and "Extract
+# recycleDiscard as the single reshuffle site".
+#
+# Release flow: promote the curated `## [Unreleased]` heading to
+# `## [X.Y.Z] - <date>` by hand and open a fresh empty `[Unreleased]`.
+# See AGENT-NOTES.md, "Release flow".
+#
+# This config is kept for `git cliff --unreleased` as a READ-ONLY cross-check:
+# it lists conventional commits since the last tag, so you can spot a change
+# that never got a curated entry. Never redirect that output over CHANGELOG.md.
 [changelog]
 header = """
 # Changelog
