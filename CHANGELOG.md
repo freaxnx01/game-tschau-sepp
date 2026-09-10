@@ -6,6 +6,8 @@ All notable changes to this project are documented here, following
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-10
+
 ### Added
 
 - Debug dialog: Ctrl+Click the "Debug" button to pop it into its own window, live-updating alongside the main game (#9)
