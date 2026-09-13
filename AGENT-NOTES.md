@@ -10,6 +10,18 @@ regenerate (it happened once: commit `846dc67` edited only `index.html`).
 - **Edit `source/`, then run `scripts/bundle.sh`** — it regenerates the
   dc block in `index.html` and verifies the sync. Never hand-edit the game
   code in `index.html`.
+- **`bundle.sh` syncs the `<script>` block ONLY — not the `<x-dc>` markup.**
+  A template change (new element, new `{{ binding }}`) must be hand-edited
+  into *both* `source/Tschau Sepp Online.dc.html` and `index.html`, with
+  identical text. Editing only `source/` makes `bundle.sh` fail with:
+
+  ```
+  ✖ dc-sync: a {{ placeholder }} binding in 'index.html's static markup differs
+    bundle.sh does not sync this — hand-edit the same markup change into both files.
+  ```
+
+  That is the guard working, not a broken bundler. JS-only changes are
+  regenerated normally; it is markup that needs the double edit.
 - `scripts/check-dc-sync.sh` is the guard. It runs in CI
   (`.github/workflows/dc-sync.yml`) and in the repo-local pre-commit hook.
 - Fresh clone setup (hook is not versioned):
