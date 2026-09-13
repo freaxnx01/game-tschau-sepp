@@ -4,6 +4,11 @@
 <link rel="icon" href="favicon.png" sizes="32x32" type="image/png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- React vendored (#8) — support.js's loadReactUmd() skips its CDN fetch when
+     window.React/ReactDOM already exist. The integrity values are the same hashes
+     support.js pins in REACT_SRI / REACT_DOM_SRI. -->
+<script src="./vendor/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z"></script>
+<script src="./vendor/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1"></script>
 <script src="./support.js"></script>
 </head>
 <body>

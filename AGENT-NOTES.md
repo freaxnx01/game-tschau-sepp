@@ -34,6 +34,22 @@ regenerate (it happened once: commit `846dc67` edited only `index.html`).
   The global pre-commit hook (`~/.config/git/hooks/pre-commit`) runs
   gitleaks first, then delegates to this repo-local hook.
 
+## Vendored React
+
+`vendor/react*.production.min.js` (18.3.1 UMD) are loaded by `index.html` and
+`source/*.dc.html` **before** `support.js`, so the runtime's `loadReactUmd()`
+short-circuits on `window.React && window.ReactDOM` and never calls unpkg.
+
+`support.js` still carries `REACT_URL` / `REACT_SRI` as an unused fallback — it
+is generated dc-runtime output, so do not edit it. That means the vendored
+version and the fallback version can drift: **when bumping React, replace the
+`vendor/` files and confirm their sha384 digests still match `REACT_SRI` /
+`REACT_DOM_SRI`**, or the fallback would serve a different version than the
+vendored files. `scripts/sim/test-vendor-react.mjs` enforces that match.
+
+Note the page still contacts `fonts.googleapis.com` and `buttons.github.io`;
+only React was de-CDN'd.
+
 ## Simulation harness
 
 `scripts/sim/` holds a Node harness that plays CPU-vs-CPU games through the
