@@ -171,6 +171,13 @@
               </div>
             </sc-for>
           </div>
+          <!-- Startcharte-Wähler (#7) — wie vieli Charte jede zum Start überchunnt -->
+          <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 12px; margin-bottom: 16px;">
+            <span style="font-size: 18px; font-weight: 700; color: #4a3416;">Startcharte:</span>
+            <sc-for list="{{ startCardOptions }}" as="o" hint-placeholder-count="2">
+              <button onClick="{{ o.pick }}" aria-pressed="{{ o.pressed }}" style="font-family: inherit; font-size: 18px; font-weight: 800; color: {{ o.fg }}; background: {{ o.bg }}; border: 2px solid {{ o.border }}; border-radius: 10px; padding: 7px 20px; cursor: pointer; box-shadow: {{ o.shadow }}; transform: {{ o.lift }};" style-hover="filter: brightness(1.12);">{{ o.label }}</button>
+            </sc-for>
+          </div>
           <div style="font-size: 18px; font-weight: 700; color: #4a3416; margin-bottom: 12px;">Gäge dr Computer:</div>
           <div style="display: flex; gap: 16px; justify-content: center;">
             <button onClick="{{ startEasy }}" style="flex: 1; font-family: inherit; font-size: 20px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 12px; padding: 13px 26px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Gmüetlich<br><span style="font-size: 14px; font-weight: 400; font-style: italic;">für gmüetlichi Sepp</span></button>
@@ -434,8 +441,11 @@ class Component extends DCLogic {
   static COOLDOWN_MAX = 8; // so viel zletscht gspiilti Charte chömed bim Mische zunderscht
   static SHED_BONUS = 20;       // Wert vo dere zwöite Charte, wo d Pflicht-Deckig abschmiisst
   static STRANDED_PENALTY = 25; // Abzug, wenn dr Zug e Sackgass-Hand hinderlaat
+  static START_CARD_OPTIONS = [5, 7];
+  static START_CARDS_KEY = 'tschauSeppStartCards';
   state = {
     phase: 'menu', // menu | play | wish | roundEnd
+    startCards: Component.normalizeStartCards(this.props.startcharte),
     mode: 'bot', // bot | host | guest
     difficulty: 'gwieft',
     myName: '',
@@ -682,6 +692,8 @@ class Component extends DCLogic {
     this.onEsc = (e) => this.handleEscKey(e);
     window.addEventListener('keydown', this.onEsc);
     this.mpInt = setInterval(() => this.mpTickCheck(), 1000);
+    const stored = this.storedStartCards();
+    if (stored != null) this.setState({ startCards: stored });
   }
   componentWillUnmount() {
     this.mounted = false; this.tk++;
@@ -706,6 +718,39 @@ class Component extends DCLogic {
     } else this.forceUpdate();
   }
 
+  // Query: e gültigi Aazahl Startcharte us eme rohe Wärt, susch dr Standard 5.
+  static normalizeStartCards(raw) {
+    const n = parseInt(raw, 10);
+    return Component.START_CARD_OPTIONS.includes(n) ? n : 5;
+  }
+
+  // localStorage cha ufwärfe (privats Fänschter, blockierti Site-Date) — drum
+  // immer iipackt. Kei gültige Wärt heisst: nüt gspeicheret, nimm dr Standard.
+  storedStartCards() {
+    try {
+      const raw = window.localStorage.getItem(Component.START_CARDS_KEY);
+      if (raw == null) return null;
+      const n = parseInt(raw, 10);
+      return Component.START_CARD_OPTIONS.includes(n) ? n : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Command: setzt d Aazahl Startcharte für di nächscht Rundä. Nume im Menu —
+  // e laufigi Partie behaltet iri Aazahl.
+  setStartCards(n) {
+    if (this.state.phase !== 'menu') return;
+    if (!Component.START_CARD_OPTIONS.includes(n)) return;
+    if (n === this.state.startCards) return;
+    this.setState({ startCards: n });
+    try {
+      window.localStorage.setItem(Component.START_CARDS_KEY, String(n));
+    } catch (e) {
+      // Nöd speicherbar (privats Fänschter) — d Wahl gilt trotzdem für die Sitzig.
+    }
+  }
+
   start(diff) {
     const seats = [
       { name: 'Du', kind: 'local', hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
@@ -716,7 +761,7 @@ class Component extends DCLogic {
   startRound() {
     this.tk++;
     const pile = this.buildDeck();
-    const n = parseInt(this.props.startcharte ?? '5', 10) || 5;
+    const n = this.state.startCards;
     const seats = this.state.seats.map(x => ({ ...x, hand: [], said: false }));
     for (let i = 0; i < n; i++) seats.forEach(x => { if (x.status === 'ok') x.hand.push(pile.pop()); });
     // erschti Charte dörf kei Spezialcharte sii (7, 8, Under, Ass)
@@ -1939,6 +1984,19 @@ class Component extends DCLogic {
       roundEndCardLabel: reCards.length > 1 ? 'Di letschte Charte' : 'Di letschti Charte',
       // menus
       menuSuits: suits.map(x => ({ uri: this.suitUri(x), name: this.suitName(x) })),
+      startCardOptions: Component.START_CARD_OPTIONS.map(n => {
+        const on = n === s.startCards;
+        return {
+          label: String(n),
+          pressed: on ? 'true' : 'false',
+          fg: on ? '#f6efd9' : '#6b5636',
+          bg: on ? 'linear-gradient(180deg, #c9a24a, #a8801f)' : 'linear-gradient(180deg, #efe6cd, #ded2b4)',
+          border: on ? '#7a5a12' : 'rgba(122,90,18,0.35)',
+          shadow: on ? '0 4px 10px rgba(0,0,0,0.35)' : 'none',
+          lift: on ? 'translateY(-1px)' : 'none',
+          pick: () => this.setStartCards(n),
+        };
+      }),
       wishOptions: suits.map(x => ({ uri: this.suitUri(x), name: this.suitName(x), pick: () => this.pickWish(x) })),
       roundEndTitle: re ? (re.winner === my ? 'Sepp! Du hesch d Rundä gwunne!' : (this.nm(re.winner, my, seats) + ' het d Rundä gwunne.')) : '',
       roundEndColor: re && re.winner === my ? '#31694a' : '#7c1f26',

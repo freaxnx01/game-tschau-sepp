@@ -8,6 +8,7 @@ All notable changes to this project are documented here, following
 
 ### Added
 
+- Choose how many cards each player starts with — 5 or 7 — from the start menu; the choice is remembered (#7)
 - CI runs the `scripts/sim` test suites and the 36-card invariant harness on every pull request (#22)
 
 ## [0.3.0] - 2026-09-10
