@@ -6,19 +6,21 @@ All notable changes to this project are documented here, following
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-17
+
 ### Added
 
 - Local hotseat multiplayer — two humans on one device, with a full-screen reveal gate between turns so neither sees the other's hand (#2)
 - Choose how many cards each player starts with — 5 or 7 — from the start menu; the choice is remembered (#7)
 - CI runs the `scripts/sim` test suites and the 36-card invariant harness on every pull request (#22)
 
-### Fixed
-
-- A 7 drawn as a forced penalty can now be played to continue the chain — drawing is no longer treated as conceding the round (#27)
-
 ### Changed
 
 - React is now served from the repo instead of unpkg, so the game loads offline and without a third-party round trip (#8)
+
+### Fixed
+
+- A 7 drawn as a forced penalty can now be played to continue the chain — drawing is no longer treated as conceding the round (#27)
 
 ## [0.3.0] - 2026-09-10
 
