@@ -82,9 +82,16 @@ seat is acting:
 | `botPick()` | `s.difficulty === 'gmuetlich'` | `seats[me].difficulty === 'gmuetlich'` |
 | "forgets Tschau" roll | `s.difficulty === 'gmuetlich'` | `seats[who].difficulty === 'gmuetlich'` |
 
-`start(diff)` writes `difficulty` onto the bot seat instead of the root, so solo
-games keep behaving identically. `state.difficulty` stops being read by the bot
-and is removed rather than left as a second source of truth.
+`start(diff)` writes `difficulty` onto the bot seat as well, so solo games keep
+behaving identically.
+
+**Corrected during the build:** this section originally said `state.difficulty`
+would be *removed*. It is kept. `scripts/sim/harness.mjs:147` sets only the
+global field and builds its seats without a `difficulty`, so reading solely from
+the seat would have routed every harness game down the `gwieft` path and
+silently destroyed all gmüetlich coverage — with no test going red. Instead
+there is one read path, `seatDifficulty(i)`, with explicit precedence: the seat
+wins, the global field is the fallback.
 
 ## Screen inventory
 
@@ -93,7 +100,10 @@ No new screens. Four implied behaviours, flagged rather than left for the build:
 - **`showTschau` and `showPasse` must be suppressed**, not only `showHint`. Both
   key off `mySeat`, which now points at a bot seat, so a stray clickable
   "Tschau!" could appear for a hand the human does not control.
-- **`tryPlay()` must refuse in spectate mode.** The hand renders face-up with
+- **`tryPlay()`, `drawClick()`, `sayTschau()` and `passTurn()` must all refuse
+  in spectate mode.** The flow originally named only `tryPlay`; the draw pile's
+  click handler is always mounted, so clicking it would have drawn *for* the
+  bot. The hand renders face-up with
   `pick` handlers attached; without a guard a click would let the human play
   *for* the bot. "Nothing is clickable" has to be enforced in the command, not
   merely hidden in the view.

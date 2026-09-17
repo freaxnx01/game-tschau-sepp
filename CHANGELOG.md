@@ -6,6 +6,10 @@ All notable changes to this project are documented here, following
 
 ## [Unreleased]
 
+### Added
+
+- CPU vs CPU spectator mode — watch Gmüetlich play Gwieft with both hands face-up, from the start menu (#1)
+
 ## [0.4.0] - 2026-09-17
 
 ### Added
