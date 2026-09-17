@@ -1166,6 +1166,15 @@ class Component extends DCLogic {
       if (s.pending7 > 0) msg = this.M(nxt, 'seven', { n: s.pending7, chain: s.sevenChain });
       else msg = this.M(nxt, 'turn', s.wish);
     }
+    // Chunt s zrugg zum Gwinner, wo kei Charte meh het, und isch kei Siebni
+    // meh offe — de isch d Chetti brochen und sini Rundä stoht (#27).
+    if (s.pendingWinner != null && nxt === s.pendingWinner && s.pending7 === 0
+        && s.seats[nxt] && s.seats[nxt].hand.length === 0) {
+      const w = s.pendingWinner;
+      this.setState({ pendingWinner: null, bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
+      this.after(600, () => this.endRound(w));
+      return;
+    }
     this.setState({ turn: nxt, message: msg, hasDrawn: false, cover: null, hintId: null });
     this.maybeBot();
   }
@@ -1228,20 +1237,20 @@ class Component extends DCLogic {
       this.setState({ pending7: 0, sevenChain: 0 });
       if (s.pendingWinner != null) {
         const w = s.pendingWinner;
-        this.setState({ pendingWinner: null });
-        if (who !== w) {
-          // Chain isch bi dim Sitz brochen worde, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
-          this.setState({ bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
-          this.after(600, () => this.endRound(w));
-          return;
+        if (who === w) {
+          // Dr Gwinner sälber het müesse zieh — mit Charte isch er zrugg im
+          // Spiel. Isch dr Stapel läär, cha d Rundä nümme glöst werde (#16).
+          this.setState({ pendingWinner: null });
+          if (!got.length) {
+            this.setState({ bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
+            this.after(600, () => this.endRound(w));
+            return;
+          }
         }
-        // Dr Gwinner sälber het müesse zieh. Het er Charte übercho, gaht d Rundä
-        // wiiter; isch dr Stapel läär, cha si nümme glöst werde — Rundä beende.
-        if (!got.length) {
-          this.setState({ bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
-          this.after(600, () => this.endRound(w));
-          return;
-        }
+        // Susch blibt dr Gwinner pendent: zieh isch nöd s Glichi wie ufgäh (#27).
+        // Dä wo zoge het darf jetzt no spiele — genau wie i ere normale
+        // Siebni-Chetti. D Rundä stoht erscht, wenn s würklich zrugg zum
+        // Gwinner chunt (siehe nextTurn).
       }
     }
     if (!got.length) { this.setState({ message: this.M(who, 'noCards') }); this.after(700, () => this.nextTurn(who, { rank: 'x' })); return; }
