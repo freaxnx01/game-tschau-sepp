@@ -69,7 +69,7 @@
       <sc-for list="{{ opps }}" as="o" hint-placeholder-count="0">
         <div data-screen-label="Gegner" style="position: absolute; top: 22px; left: {{ o.x }}; width: 0; height: 150px;">
           <sc-for list="{{ o.cards }}" as="c" hint-placeholder-count="0">
-            <div style="position: absolute; left: 0; top: 0; width: {{ botW }}px; aspect-ratio: 2 / 3; background-image: url({{ backUri }}); background-size: 100% 100%; border-radius: 8px; transform-origin: 50% 0; transform: {{ c.tf }}; transition: transform 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.45); animation: dealUp 0.45s {{ c.delay }} backwards;"></div>
+            <div style="position: absolute; left: 0; top: 0; width: {{ botW }}px; aspect-ratio: 2 / 3; background-image: url({{ c.uri }}); background-size: 100% 100%; border-radius: 8px; transform-origin: 50% 0; transform: {{ c.tf }}; transition: transform 0.3s; box-shadow: 0 4px 10px rgba(0,0,0,0.45); animation: dealUp 0.45s {{ c.delay }} backwards;"></div>
           </sc-for>
           <div style="position: absolute; top: {{ botLabelY }}px; left: 0; transform: translateX(-50%); color: {{ o.labelColor }}; font-size: 14px; font-weight: 600; background: rgba(0,0,0,0.28); padding: 3px 14px; border-radius: 20px; white-space: nowrap; border: 1px solid {{ o.ring }}; text-decoration: {{ o.deco }};">{{ o.label }}</div>
         </div>
@@ -199,6 +199,10 @@
           </div>
           <div style="margin-top: 20px; border-top: 2px solid rgba(184,146,58,0.45); padding-top: 18px;">
             <button onClick="{{ openMp }}" style="width: 100%; font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #5a7ba6, #3e5a80); border: 2px solid #263a55; border-radius: 12px; padding: 13px 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Mit Kollege über s Internet spiele (2–4)</button>
+          </div>
+          <!-- Zueluege (#1) — zwei Bots gägenand, dr Mänsch luegt nume zue -->
+          <div style="margin-top: 14px;">
+            <button onClick="{{ startSpectate }}" title="Zwei Computer spieled gägenand — du luegsch nume zue" style="width: 100%; font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1.3; color: #6b5636; background: rgba(0,0,0,0.05); border: 2px solid rgba(122,90,18,0.35); border-radius: 10px; padding: 9px 18px; cursor: pointer;" style-hover="filter: brightness(1.06); color: #4a3416;">Zueluege: Gmüetlich gäge Gwieft</button>
           </div>
           <div style="margin-top: 16px; font-size: 14px; color: #8a7350; font-style: italic;">Tipp: Bi dr letschte Charte nöd vergässe «Tschau!» z'säge…</div>
           <div style="margin-top: 10px; font-size: 13px;"><a href="https://github.com/freaxnx01/game-tschau-sepp" target="_blank" rel="noopener" style="color: #7c1f26; font-weight: 700;">Quellcode uf GitHub — freaxnx01/game-tschau-sepp</a></div>
@@ -808,10 +812,25 @@ class Component extends DCLogic {
     this.setState({ hotseatNames: names });
   }
 
+  // Query: s Niveau vom Sitz. Dr Sitz gwünnt; s globale Feld isch dr Fallback
+  // (dr Sim-Harness setzt nume s globale, und das mues wiiter funktioniere).
+  seatDifficulty(i) {
+    const seat = this.state.seats[i];
+    return (seat && seat.difficulty) || this.state.difficulty;
+  }
+
+  startSpectate() {
+    const seats = [
+      { name: 'Gmüetlich', kind: 'bot', difficulty: 'gmuetlich', hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
+      { name: 'Gwieft', kind: 'bot', difficulty: 'gwieft', hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
+    ];
+    this.setState({ mode: 'spectate', seats, mySeat: 0, roundNum: 1, starter: 0 }, () => this.startRound());
+  }
+
   start(diff) {
     const seats = [
       { name: 'Du', kind: 'local', hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
-      { name: 'Computer', kind: 'bot', hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
+      { name: 'Computer', kind: 'bot', difficulty: diff, hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
     ];
     this.setState({ mode: 'bot', difficulty: diff, seats, mySeat: 0, roundNum: 1, starter: 0 }, () => this.startRound());
   }
@@ -1015,6 +1034,8 @@ class Component extends DCLogic {
   }
 
   tryPlay(id) {
+    // Bim Zueluege spielt dr Mänsch für niemert — d Bots mached alles sälber.
+    if (this.state.mode === 'spectate') return;
     const s = this.state; const my = s.mySeat;
     if (s.phase !== 'play' || s.turn !== my) return;
     const c = (s.seats[my] ? s.seats[my].hand : []).find(x => x.id === id);
@@ -1050,7 +1071,7 @@ class Component extends DCLogic {
 
     // bot announces Tschau
     if (seats[who].kind === 'bot' && hand.length === 1) {
-      const forgets = s.difficulty === 'gmuetlich' && Math.random() < 0.3;
+      const forgets = this.seatDifficulty(who) === 'gmuetlich' && Math.random() < 0.3;
       if (!forgets) {
         seats[who] = { ...seats[who], said: true };
         this.after(450, () => { this.setState({ bubble: { seat: who, text: 'Tschau!' } }); this.snd('tschau'); this.after(1700, () => this.setState({ bubble: null })); });
@@ -1193,6 +1214,8 @@ class Component extends DCLogic {
   }
 
   sayTschau() {
+    // Bim Zueluege spielt dr Mänsch für niemert — d Bots mached alles sälber.
+    if (this.state.mode === 'spectate') return;
     const s = this.state; const my = s.mySeat; const me = s.seats[my];
     if (s.phase !== 'play' || !me || me.hand.length !== 1 || me.said) return;
     if (s.mode === 'guest') {
@@ -1260,6 +1283,8 @@ class Component extends DCLogic {
     });
   }
   drawClick() {
+    // Bim Zueluege spielt dr Mänsch für niemert — d Bots mached alles sälber.
+    if (this.state.mode === 'spectate') return;
     const s = this.state;
     if (s.mode === 'guest') {
       if (s.phase === 'play' && s.turn === s.mySeat && !s.hasDrawn) this.send({ t: 'draw' });
@@ -1268,6 +1293,8 @@ class Component extends DCLogic {
     this.drawFor(s.mySeat);
   }
   passTurn() {
+    // Bim Zueluege spielt dr Mänsch für niemert — d Bots mached alles sälber.
+    if (this.state.mode === 'spectate') return;
     const s = this.state;
     if (s.phase !== 'play' || s.turn !== s.mySeat || !s.hasDrawn) return;
     if (s.mode === 'guest') { this.send({ t: 'pass' }); return; }
@@ -1419,7 +1446,7 @@ class Component extends DCLogic {
   botPick(cand) {
     const s = this.state; const me = s.turn;
     const hand = s.seats[me].hand;
-    if (s.difficulty === 'gmuetlich') return cand[Math.floor(Math.random() * cand.length)];
+    if (this.seatDifficulty(me) === 'gmuetlich') return cand[Math.floor(Math.random() * cand.length)];
     const oppV = s.seats.filter((x, i) => i !== me && x.status === 'ok').map(x => x.hand.length);
     const oppMin = oppV.length ? Math.min.apply(null, oppV) : 99;
     const nonJ = cand.filter(c => c.rank !== 'U');
@@ -1807,6 +1834,7 @@ class Component extends DCLogic {
     const bW = Math.round(W * 0.66);
     const felt = this.props.tischfarbe ?? '#31694a';
     const myTurn = s.phase === 'play' && s.turn === my && meSeat.status === 'ok';
+    const spectate = s.mode === 'spectate';
     const gold = '#f0c243';
 
     const playerCards = myHand.map((c, i) => {
@@ -1837,11 +1865,13 @@ class Component extends DCLogic {
       const n = seat.hand.length;
       const active = s.phase === 'play' && s.turn === si && seat.status === 'ok';
       const cards = seat.status === 'ok' ? seat.hand.map((c, j) => {
+        // Bim Zueluege git s kei Gheimnis — alli Charte sind offe.
         const off = j - (n - 1) / 2;
         const sp = Math.min(30, (opIdx.length > 1 ? 260 : 480) / Math.max(n - 1, 1));
         return {
           tf: 'translateX(' + Math.round(off * sp - bW / 2) + 'px) translateY(' + Math.round(Math.pow(Math.abs(off), 1.6) * 2) + 'px) rotate(' + (-off * 2.5).toFixed(1) + 'deg)',
           delay: (j * 0.07).toFixed(2) + 's',
+          uri: spectate ? this.face(c) : this.backUri(),
         };
       }) : [];
       return {
@@ -2043,8 +2073,8 @@ class Component extends DCLogic {
       showWishChip: !!s.wish && (s.phase === 'play' || s.phase === 'wish'),
       wishUri: s.wish ? this.suitUri(s.wish) : '',
       wishName: s.wish ? this.suitName(s.wish) : '',
-      showTschau: s.phase === 'play' && myHand.length === 1 && !meSeat.said && meSeat.status === 'ok',
-      showHint: myTurn && s.mode !== 'hotseat',
+      showTschau: !spectate && s.phase === 'play' && myHand.length === 1 && !meSeat.said && meSeat.status === 'ok',
+      showHint: myTurn && s.mode !== 'hotseat' && !spectate,
       hotseatName1: s.hotseatNames[0],
       hotseatName2: s.hotseatNames[1],
       showReveal,
@@ -2055,7 +2085,7 @@ class Component extends DCLogic {
       showTip: !!s.tip && s.phase === 'play',
       tipText: s.tip,
       dismissTip: () => this.setState({ tip: null }),
-      showPasse: myTurn && s.hasDrawn && s.cover == null,
+      showPasse: !spectate && myTurn && s.hasDrawn && s.cover == null,
       showDrawToast: !!s.drawToast && s.phase === 'play',
       drawToastText: s.drawToast || '',
       showReshuffleToast: !!s.reshuffleToast && s.phase === 'play',
@@ -2086,6 +2116,7 @@ class Component extends DCLogic {
       roundEndPts: re ? ('+' + re.pts + ' Pünkt ' + (re.winner === my ? 'für di' : ('für ' + this.nm(re.winner, my, seats)))) : '',
       roundEndScore: 'Stand: ' + seats.map((x, i) => (i === my ? 'Du' : x.name) + ' ' + x.score).join(' · '),
       // handlers
+      startSpectate: () => this.startSpectate(),
       startHotseat: () => this.startHotseat(),
       setHotseatName1: (e) => this.setHotseatName(0, e.target.value),
       setHotseatName2: (e) => this.setHotseatName(1, e.target.value),
