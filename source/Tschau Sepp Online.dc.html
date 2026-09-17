@@ -188,6 +188,15 @@
             <button onClick="{{ startEasy }}" style="flex: 1; font-family: inherit; font-size: 20px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 12px; padding: 13px 26px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Gmüetlich<br><span style="font-size: 14px; font-weight: 400; font-style: italic;">für gmüetlichi Sepp</span></button>
             <button onClick="{{ startSmart }}" style="flex: 1; font-family: inherit; font-size: 20px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #c23b32, #7c1f26); border: 2px solid #4a1010; border-radius: 12px; padding: 13px 26px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Gwieft<br><span style="font-size: 14px; font-weight: 400; font-style: italic;">für gwiefti Füchs</span></button>
           </div>
+          <!-- Hotseat (#2) — zwei Mänsche am gliche Grät -->
+          <div style="margin-top: 18px; border-top: 2px solid rgba(184,146,58,0.45); padding-top: 16px;">
+            <div style="font-size: 18px; font-weight: 700; color: #4a3416; margin-bottom: 10px;">Zu zweit am gliche Grät:</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 12px;">
+              <input value="{{ hotseatName1 }}" onChange="{{ setHotseatName1 }}" maxLength="14" placeholder="Spiler 1" aria-label="Name Spiler 1" style="flex: 1; min-width: 120px; font-family: inherit; font-size: 16px; color: #4a3416; background: #fbf6e8; border: 2px solid rgba(122,90,18,0.45); border-radius: 9px; padding: 8px 12px; text-align: center;">
+              <input value="{{ hotseatName2 }}" onChange="{{ setHotseatName2 }}" maxLength="14" placeholder="Spiler 2" aria-label="Name Spiler 2" style="flex: 1; min-width: 120px; font-family: inherit; font-size: 16px; color: #4a3416; background: #fbf6e8; border: 2px solid rgba(122,90,18,0.45); border-radius: 9px; padding: 8px 12px; text-align: center;">
+            </div>
+            <button onClick="{{ startHotseat }}" style="width: 100%; font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #7a6aa8, #52447a); border: 2px solid #332a4f; border-radius: 12px; padding: 13px 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Spiel starte</button>
+          </div>
           <div style="margin-top: 20px; border-top: 2px solid rgba(184,146,58,0.45); padding-top: 18px;">
             <button onClick="{{ openMp }}" style="width: 100%; font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #5a7ba6, #3e5a80); border: 2px solid #263a55; border-radius: 12px; padding: 13px 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Mit Kollege über s Internet spiele (2–4)</button>
           </div>
@@ -348,6 +357,20 @@
     </sc-if>
 
     <!-- ================= ROUND END ================= -->
+    <!-- Hotseat-Übergab (#2) — deckt s ganze Brett zue, bis dr nöchst Spiler bereit isch -->
+    <sc-if value="{{ showReveal }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Übergab" style="position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: linear-gradient(180deg, #3d2a16, #24170b);">
+        <div style="display: flex; gap: 16px; opacity: 0.55;">
+          <sc-for list="{{ menuSuits }}" as="m" hint-placeholder-count="0">
+            <div style="width: 34px; height: 34px; background-image: url({{ m.uri }}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+          </sc-for>
+        </div>
+        <div style="font-size: clamp(24px, 6vw, 34px); font-weight: 900; color: #f3ead2; text-align: center; padding: 0 24px; line-height: 1.2;">{{ revealTitle }}</div>
+        <div style="font-size: 17px; color: #d9c79c; text-align: center; padding: 0 24px;">{{ revealCounts }}</div>
+        <button onClick="{{ revealTurn }}" style="font-family: inherit; font-size: 22px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 14px; padding: 18px 44px; cursor: pointer; box-shadow: 0 5px 14px rgba(0,0,0,0.45);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Bereit — ufdecke</button>
+        <div style="font-size: 15px; font-style: italic; color: #b8a67e; text-align: center; padding: 0 32px; max-width: 520px;">{{ revealMessage }}</div>
+      </div>
+    </sc-if>
     <sc-if value="{{ showRoundEnd }}" hint-placeholder-val="{{ false }}">
       <div data-screen-label="Rundenendi" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(15,20,12,0.5); z-index: 60;">
         <div style="background: linear-gradient(180deg, #f6efdc, #ede1c2); border: 3px solid #b8923a; box-shadow: 0 0 0 6px #3a2818, 0 20px 50px rgba(0,0,0,0.6); border-radius: 20px; padding: 38px 54px; text-align: center; max-width: 500px; animation: popIn 0.35s;">
@@ -451,7 +474,8 @@ class Component extends DCLogic {
   state = {
     phase: 'menu', // menu | play | wish | roundEnd
     startCards: Component.normalizeStartCards(this.props.startcharte),
-    mode: 'bot', // bot | host | guest
+    hotseatNames: ['Spiler 1', 'Spiler 2'],
+    mode: 'bot', // bot | hotseat | host | guest
     difficulty: 'gwieft',
     myName: '',
     myNameCustom: false,
@@ -756,6 +780,34 @@ class Component extends DCLogic {
     }
   }
 
+  // Query: dr Name vom Sitz i, susch dr Standard.
+  hotseatName(i) {
+    const raw = (this.state.hotseatNames[i] || '').trim();
+    return raw || ('Spiler ' + (i + 1));
+  }
+
+  startHotseat() {
+    const seats = [0, 1].map(i => ({
+      name: this.hotseatName(i), kind: 'local', hand: [], said: false, status: 'ok', score: 0, rounds: 0,
+    }));
+    this.setState({ mode: 'hotseat', seats, mySeat: 0, roundNum: 1, starter: 0 }, () => this.startRound());
+  }
+
+  // Command: dr nöchst Spiler het s Grät übernoh und darf ufdecke.
+  revealTurn() {
+    const s = this.state;
+    if (s.mode !== 'hotseat') return;
+    if (s.turn === s.mySeat) return;
+    // Tipp/Hint vom vorige Spiler wägmache — die ghöred em nöd.
+    this.setState({ mySeat: s.turn, tip: null, hintId: null });
+  }
+
+  setHotseatName(i, value) {
+    const names = this.state.hotseatNames.slice();
+    names[i] = value;
+    this.setState({ hotseatNames: names });
+  }
+
   start(diff) {
     const seats = [
       { name: 'Du', kind: 'local', hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
@@ -972,7 +1024,8 @@ class Component extends DCLogic {
     const adv = this.advise();
     const hand = s.seats[my].hand;
     const effScore = this.moveScore(c, hand, s);
-    if (adv.card && adv.card.id !== c.id && adv.score - effScore >= 18) {
+    // Kei Coach zwüsche zwei Mänsche: dr Tipp verrotet öppis über d Hand.
+    if (s.mode !== 'hotseat' && adv.card && adv.card.id !== c.id && adv.score - effScore >= 18) {
       tip = this.reasonFor(c, adv.card, s);
     }
     if (s.mode === 'guest') this.send({ t: 'play', id });
@@ -1826,6 +1879,16 @@ class Component extends DCLogic {
     const pileStack = Array.from({ length: pileStackN }, (_, i) => ({ x: -i * 2, y: -i * 2 }));
     const suits = ['rose', 'schilte', 'eichle', 'schaelle'];
     const re = s.roundEnd;
+    // D Übergab isch komplett abgleitet — kei eigene Flag, wo chönnt uselaufe.
+    // En Achti oder e Deckig setzt `turn` uf dr glich Sitz, drum chunt dört
+    // automatisch kei Übergab.
+    const incoming = s.seats[s.turn];
+    const showReveal = s.mode === 'hotseat' && s.phase === 'play' && !re
+      && s.turn !== my && !!incoming && incoming.kind === 'local';
+    const revealTitle = showReveal ? ('Gib s Grät em ' + incoming.name) : '';
+    const revealCounts = showReveal
+      ? (incoming.name + ' het ' + incoming.hand.length + ' Charte · Du hesch ' + myHand.length)
+      : '';
     // Charte vom letschte Zug vom Gwinner (mit Fallback uf di eint oberschti Charte).
     const reCards = re ? (re.cards && re.cards.length ? re.cards : (re.card ? [re.card] : [])) : [];
     const mp = s.mp || null;
@@ -1972,7 +2035,13 @@ class Component extends DCLogic {
       wishUri: s.wish ? this.suitUri(s.wish) : '',
       wishName: s.wish ? this.suitName(s.wish) : '',
       showTschau: s.phase === 'play' && myHand.length === 1 && !meSeat.said && meSeat.status === 'ok',
-      showHint: myTurn,
+      showHint: myTurn && s.mode !== 'hotseat',
+      hotseatName1: s.hotseatNames[0],
+      hotseatName2: s.hotseatNames[1],
+      showReveal,
+      revealTitle,
+      revealCounts,
+      revealMessage: s.message || '',
       hintClick: () => this.hintClick(),
       showTip: !!s.tip && s.phase === 'play',
       tipText: s.tip,
@@ -2008,6 +2077,10 @@ class Component extends DCLogic {
       roundEndPts: re ? ('+' + re.pts + ' Pünkt ' + (re.winner === my ? 'für di' : ('für ' + this.nm(re.winner, my, seats)))) : '',
       roundEndScore: 'Stand: ' + seats.map((x, i) => (i === my ? 'Du' : x.name) + ' ' + x.score).join(' · '),
       // handlers
+      startHotseat: () => this.startHotseat(),
+      setHotseatName1: (e) => this.setHotseatName(0, e.target.value),
+      setHotseatName2: (e) => this.setHotseatName(1, e.target.value),
+      revealTurn: () => this.revealTurn(),
       startEasy: () => this.start('gmuetlich'),
       startSmart: () => this.start('gwieft'),
       nextRoundClick: () => { if (this.state.mode === 'guest') this.send({ t: 'next' }); else this.nextRound(); },

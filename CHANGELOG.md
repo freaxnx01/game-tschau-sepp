@@ -8,6 +8,7 @@ All notable changes to this project are documented here, following
 
 ### Added
 
+- Local hotseat multiplayer — two humans on one device, with a full-screen reveal gate between turns so neither sees the other's hand (#2)
 - Choose how many cards each player starts with — 5 or 7 — from the start menu; the choice is remembered (#7)
 - CI runs the `scripts/sim` test suites and the 36-card invariant harness on every pull request (#22)
 
