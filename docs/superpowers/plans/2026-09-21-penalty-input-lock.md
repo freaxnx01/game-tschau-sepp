@@ -16,6 +16,12 @@
 - **The sim tests read `index.html`, not `source/`.** Run `scripts/bundle.sh` before every test run, or the test measures the pre-edit bundle.
 - This change is JS-only. No `{{ binding }}` or `<x-dc>` markup changes, so no double hand-edit is needed.
 - TDD: the failing test comes first and must fail for the stated reason.
+- **Pin the position; never compare two shuffles.** `startRound()` reshuffles on every
+  call, so a test that plays the same position twice gets two different decks and its
+  result flips between runs. The scaffold below overwrites `pile`, `discard` and both
+  hands after `startRound()`, the way `scripts/sim/test-drawn-seven.mjs` does. A first
+  draft of this test skipped that and was non-deterministic — the bare-Ace case draws
+  until a card covers, so its card count depended on the shuffle.
 - Buildless stack — no dependencies, no `package.json`, no framework.
 - Surgical: only the `busy` flag, its guards, the two `renderVals()` values and the two P2P snapshot fields change.
 - Swiss-German comments and messages, matching the surrounding code.
@@ -41,9 +47,8 @@ The test adds a virtual clock on top of the existing scaffold: `setTimeout` call
 // vom Spiler nöd wirke — en Klick uf de Zugstapel derf kei extra Charte zieh,
 // dr Zug nöd wiitergäh und kei Ass-Deckig ufhebe.
 //
-// D Charte wo mir i d Hand lege isch e Dublette vo dr Farb obe uf em Ablage-
-// stapel — dä Test prüeft s Timing, nöd d 36-Charte-Invariante (das macht
-// harness.mjs).
+// D Position isch komplett festgnaglet (Hand, Ablage, Stapel), wil `startRound()`
+// jedes Mal neu mischlet: ohni das verglichti mer zwei verschiedeni Spiel.
 import fs from 'node:fs';
 
 // Usage: node scripts/sim/test-penalty-lock.mjs [index.html]
@@ -59,7 +64,8 @@ const timers = [];
 globalThis.setTimeout = (fn, ms) => { timers.push({ at: now + (ms || 0), fn, id: ++seq }); return seq; };
 globalThis.setInterval = () => 0;
 globalThis.clearTimeout = (id) => { const i = timers.findIndex(t => t.id === id); if (i >= 0) timers.splice(i, 1); };
-globalThis.window = { innerHeight: 900, innerWidth: 1400 };
+globalThis.window = { innerHeight: 900, innerWidth: 1400, addEventListener() {}, removeEventListener() {} };
+globalThis.document = { addEventListener() {}, removeEventListener() {} };
 
 function advance(ms) {
   const target = now + ms;
@@ -85,7 +91,17 @@ class DCLogic {
 
 const Component = new Function('DCLogic', 'StreamableLogic', 'React', src + '\n;return Component;')(DCLogic, DCLogic, {});
 
-// 2-Spiler-Rundä, dr Mänsch (Sitz 0) am Zug mit genau einere Charte i dr Hand.
+const TOP = { id: 900, suit: 'rose', rank: '6' };
+// Zugstapel: es wird vo hinte zoge (pop). Erschti zwei sind absichtlich
+// NÖD deckend (kei Ass, kei Under, nöd rose), di dritt deckt.
+const PILE = [
+  { id: 806, suit: 'schaelle', rank: 'B' }, { id: 805, suit: 'schaelle', rank: 'K' },
+  { id: 804, suit: 'rose', rank: '9' },
+  { id: 803, suit: 'eichle', rank: 'K' }, { id: 802, suit: 'schilte', rank: '6' },
+];
+const OPP = [{ id: 850, suit: 'eichle', rank: '9' }, { id: 851, suit: 'schilte', rank: 'K' }];
+
+// 2-Spiler-Position, dr Mänsch (Sitz 0) am Zug mit genau einere Charte.
 function seat0With(rank, said) {
   now = 0;
   timers.length = 0;
@@ -98,16 +114,25 @@ function seat0With(rank, said) {
     ],
   };
   c.startRound();
-  const top = c.state.discard[c.state.discard.length - 1];
-  const card = { id: 'T1', rank, suit: top.suit };
-  const seats = c.state.seats.map((x, i) => i === 0 ? { ...x, hand: [card], said } : x);
-  c.setState({ seats, turn: 0, phase: 'play', hasDrawn: false, pending7: 0, cover: null });
+  advance(5000);
+  timers.length = 0;
+  now = 0;
+  const card = { id: 'T1', rank, suit: 'rose' };
+  c.setState({
+    phase: 'play', turn: 0, cover: null, wish: null, wisher: null,
+    pending7: 0, sevenChain: 0, pendingWinner: null, hasDrawn: false, roundEnd: null,
+    discard: [TOP], pile: PILE.slice(),
+    seats: [
+      { ...c.state.seats[0], hand: [card], said },
+      { ...c.state.seats[1], hand: OPP.slice() },
+    ],
+  });
   return { c, card };
 }
 
 function snapshot(c) {
   const s = c.state;
-  return { hand: s.seats[0].hand.length, turn: s.turn, cover: s.cover, hasDrawn: s.hasDrawn };
+  return { hand: s.seats[0].hand.length, turn: s.turn, cover: s.cover, hasDrawn: s.hasDrawn, phase: s.phase };
 }
 
 // Ei Mal mit eme Klick mittendrin, ei Mal ohni — beidi Läuf müend im gliche
@@ -117,12 +142,12 @@ function compare(label, rank, said) {
   clicked.c.playCard(0, clicked.card);
   advance(300);
   clicked.c.drawClick();
-  advance(3000);
+  advance(4000);
   const got = snapshot(clicked.c);
 
   const baseline = seat0With(rank, said);
   baseline.c.playCard(0, baseline.card);
-  advance(3000);
+  advance(4000);
   const want = snapshot(baseline.c);
 
   const ok = JSON.stringify(got) === JSON.stringify(want);
@@ -154,7 +179,18 @@ process.exit(failed ? 1 : 0);
 
 Run: `node scripts/sim/test-penalty-lock.mjs`
 
-Expected: exit code 1, with all four lines FAIL — e.g. `FAIL Achti als letschti Charte: klickt={"hand":2,"turn":1,...} ohni={"hand":1,"turn":0,...}`.
+Expected: exit code 1 with all four lines FAIL, and — because the position is pinned —
+byte-identical output on every run:
+
+```text
+FAIL Achti als letschti Charte: klickt={"hand":2,...} ohni={"hand":1,...}
+FAIL «Tschau» vergässe: klickt={"hand":3,...} ohni={"hand":2,...}
+FAIL blutts Ass: klickt={"hand":3,"turn":0,"cover":null,...} ohni={"hand":3,"turn":0,"cover":0,...}
+FAIL nöii Rundä löst d Sperri: busy=true (erwartet false)
+```
+
+Run it twice. If the two runs differ, the position is not pinned — stop and fix that
+before writing any implementation, because every later step reads this test's verdict.
 
 - [ ] **Step 3: Commit the failing test**
 
