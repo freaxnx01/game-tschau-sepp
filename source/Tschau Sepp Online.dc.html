@@ -486,7 +486,7 @@ class Component extends DCLogic {
     seats: [], mySeat: 0,
     pile: [], discard: [],
     turn: 0, wish: null, wisher: null, cover: null, pending7: 0, sevenChain: 0, pendingWinner: null,
-    hasDrawn: false,
+    hasDrawn: false, busy: false,
     roundNum: 1, starter: 0,
     sound: true, rules: false, debugOpen: false, debugTab: 'journal', tip: null, hintId: null,
     roundEnd: null, bubble: null, history: [], debugLog: [], drawToast: null, reshuffleToast: null, reshuffleCount: 0,
@@ -850,7 +850,7 @@ class Component extends DCLogic {
     if (!seats[first] || seats[first].status !== 'ok') first = this.nextOk(first, seats);
     this.setState({
       phase: 'play', seats, pile, discard: [flip], turn: first, wish: null, wisher: null, cover: null, pending7: 0, sevenChain: 0, pendingWinner: null,
-      hasDrawn: false, drawToast: null, reshuffleToast: null, bubble: null, roundEnd: null, rules: false, history: [], debugLog: [], tip: null, hintId: null,
+      hasDrawn: false, busy: false, drawToast: null, reshuffleToast: null, bubble: null, roundEnd: null, rules: false, history: [], debugLog: [], tip: null, hintId: null,
       message: this.M(first, 'start'),
     });
     this.snd('deal');
@@ -1037,7 +1037,7 @@ class Component extends DCLogic {
     // Bim Zueluege spielt dr Mänsch für niemert — d Bots mached alles sälber.
     if (this.state.mode === 'spectate') return;
     const s = this.state; const my = s.mySeat;
-    if (s.phase !== 'play' || s.turn !== my) return;
+    if (s.busy || s.phase !== 'play' || s.turn !== my) return;
     const c = (s.seats[my] ? s.seats[my].hand : []).find(x => x.id === id);
     if (!c) return;
     if (!this.canPlay(c)) { this.snd('deny'); return; }
@@ -1083,12 +1083,13 @@ class Component extends DCLogic {
       if (hand.length === 0) {
         patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Blutt Ass — muess decke' }]);
         patch.message = this.M(who, 'bareAce');
+        patch.busy = true;
         this.setState(patch);
         this.snd('penalty');
         this.after(900, () => {
           const r = this.drawUntilCover(who); this.snd('draw');
           this.after(300, () => {
-            this.setState({ cover: who, turn: who, message: this.M(who, 'coverDrawn', r.n) });
+            this.setState({ cover: who, turn: who, busy: false, message: this.M(who, 'coverDrawn', r.n) });
             this.maybeBot(1000);
           });
         });
@@ -1106,12 +1107,13 @@ class Component extends DCLogic {
     if (c.rank === '8' && hand.length === 0) {
       patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: 'Achti als letschti Charte — zieht 1, nomol dra' }]);
       patch.message = this.M(who, 'eightLast');
+      patch.busy = true;
       this.setState(patch);
       this.snd('penalty');
       this.after(900, () => {
         this.drawCards(who, 1); this.snd('draw');
         this.after(400, () => {
-          this.setState({ turn: who, message: this.M(who, 'again'), hasDrawn: false });
+          this.setState({ turn: who, message: this.M(who, 'again'), hasDrawn: false, busy: false });
           this.maybeBot(1000);
         });
       });
@@ -1142,6 +1144,7 @@ class Component extends DCLogic {
       }
       patch.debugLog = s.debugLog.concat([{ ...baseEntry, effect: '«Tschau» vergässe — 2 Strofcharte' }]);
       patch.message = this.M(who, 'forgot');
+      patch.busy = true;
       this.setState(patch);
       this.snd('penalty');
       this.after(700, () => { this.drawCards(who, 2); this.after(700, () => this.nextTurn(who, c, true)); });
@@ -1190,11 +1193,11 @@ class Component extends DCLogic {
     if (s.pendingWinner != null && nxt === s.pendingWinner && s.pending7 === 0
         && s.seats[nxt] && s.seats[nxt].hand.length === 0) {
       const w = s.pendingWinner;
-      this.setState({ pendingWinner: null, bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
+      this.setState({ pendingWinner: null, busy: false, bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
       this.after(600, () => this.endRound(w));
       return;
     }
-    this.setState({ turn: nxt, message: msg, hasDrawn: false, cover: null, hintId: null });
+    this.setState({ turn: nxt, message: msg, hasDrawn: false, busy: false, cover: null, hintId: null });
     this.maybeBot();
   }
 
@@ -1217,7 +1220,7 @@ class Component extends DCLogic {
     // Bim Zueluege spielt dr Mänsch für niemert — d Bots mached alles sälber.
     if (this.state.mode === 'spectate') return;
     const s = this.state; const my = s.mySeat; const me = s.seats[my];
-    if (s.phase !== 'play' || !me || me.hand.length !== 1 || me.said) return;
+    if (s.busy || s.phase !== 'play' || !me || me.hand.length !== 1 || me.said) return;
     if (s.mode === 'guest') {
       this.setState({ message: 'Tschau!' });
       this.send({ t: 'tschau' });
@@ -1242,7 +1245,7 @@ class Component extends DCLogic {
 
   drawFor(who) {
     const s = this.state;
-    if (s.phase !== 'play' || s.turn !== who || s.hasDrawn) return;
+    if (s.busy || s.phase !== 'play' || s.turn !== who || s.hasDrawn) return;
     if (s.cover === who) {
       // Ei Charte pro Klick: dr Spiler luegt sie aa und entscheidet sälber, ob
       // er wiiterzieht oder e Deckig us dr Hand spielt (z.B. dr Under spare).
@@ -1301,7 +1304,7 @@ class Component extends DCLogic {
     if (this.state.mode === 'spectate') return;
     const s = this.state;
     if (s.mode === 'guest') {
-      if (s.phase === 'play' && s.turn === s.mySeat && !s.hasDrawn) this.send({ t: 'draw' });
+      if (!s.busy && s.phase === 'play' && s.turn === s.mySeat && !s.hasDrawn) this.send({ t: 'draw' });
       return;
     }
     this.drawFor(s.mySeat);
@@ -1310,7 +1313,7 @@ class Component extends DCLogic {
     // Bim Zueluege spielt dr Mänsch für niemert — d Bots mached alles sälber.
     if (this.state.mode === 'spectate') return;
     const s = this.state;
-    if (s.phase !== 'play' || s.turn !== s.mySeat || !s.hasDrawn) return;
+    if (s.busy || s.phase !== 'play' || s.turn !== s.mySeat || !s.hasDrawn) return;
     if (s.mode === 'guest') { this.send({ t: 'pass' }); return; }
     this.nextTurn(s.mySeat, { rank: 'x' });
   }
@@ -1500,7 +1503,7 @@ class Component extends DCLogic {
       lastCards.unshift({ id: hist[i].id, suit: hist[i].suit, rank: hist[i].rank });
     }
     const topCard = s.discard[s.discard.length - 1] || null;
-    this.setState({ phase: 'roundEnd', seats, roundEnd: { winner, pts, card: topCard, cards: lastCards.length ? lastCards : (topCard ? [topCard] : []) } });
+    this.setState({ phase: 'roundEnd', seats, busy: false, roundEnd: { winner, pts, card: topCard, cards: lastCards.length ? lastCards : (topCard ? [topCard] : []) } });
     this.sndRound(winner);
     if (this.state.bubble) this.after(2200, () => this.setState({ bubble: null }));
   }
@@ -1760,16 +1763,16 @@ class Component extends DCLogic {
     const s = this.state;
     switch (d.t) {
       case 'play': {
-        if (s.phase !== 'play' || s.turn !== seat) return;
+        if (s.busy || s.phase !== 'play' || s.turn !== seat) return;
         const c = s.seats[seat].hand.find(x => x.id === d.id);
         if (!c || !this.canPlay(c)) return;
         this.playCard(seat, c);
         break;
       }
       case 'draw': this.drawFor(seat); break;
-      case 'pass': if (s.phase === 'play' && s.turn === seat && s.hasDrawn) this.nextTurn(seat, { rank: 'x' }); break;
+      case 'pass': if (!s.busy && s.phase === 'play' && s.turn === seat && s.hasDrawn) this.nextTurn(seat, { rank: 'x' }); break;
       case 'tschau':
-        if (s.phase === 'play' && s.seats[seat].hand.length === 1 && !s.seats[seat].said) {
+        if (!s.busy && s.phase === 'play' && s.seats[seat].hand.length === 1 && !s.seats[seat].said) {
           this.snd('tschau');
           const seats = s.seats.map((x, i) => i === seat ? { ...x, said: true } : x);
           this.lastM = { w: seat, k: 'tschau', x: null };
@@ -1801,7 +1804,7 @@ class Component extends DCLogic {
         myHand: s.seats[i] ? s.seats[i].hand : [],
         discard: s.discard.slice(-3), pileN: s.pile.length, rsN: s.reshuffleCount || 0,
         turn: s.turn, wish: s.wish, pending7: s.pending7, pendingWinner: s.pendingWinner, cover: s.cover, wisher: s.wisher,
-        hasDrawn: s.turn === i ? s.hasDrawn : false,
+        hasDrawn: s.turn === i ? s.hasDrawn : false, busy: !!s.busy,
         roundNum: s.roundNum, roundEnd: s.roundEnd,
         lastM: this.lastM || null, bubble: s.bubble, history: s.history,
         snd: this.lastSnd || null,
@@ -1832,7 +1835,7 @@ class Component extends DCLogic {
     this.setState({
       phase: d.phase, mySeat: d.mySeat, seats, discard: d.discard, pile: new Array(d.pileN).fill(0),
       turn: d.turn, wish: d.wish, pending7: d.pending7, pendingWinner: d.pendingWinner, cover: d.cover, wisher: d.wisher,
-      hasDrawn: d.hasDrawn, roundNum: d.roundNum, roundEnd: d.roundEnd,
+      hasDrawn: d.hasDrawn, busy: !!d.busy, roundNum: d.roundNum, roundEnd: d.roundEnd,
       message, bubble: d.bubble, history: d.history || [], mp: null,
     });
   }
@@ -1860,7 +1863,7 @@ class Component extends DCLogic {
       const sp = Math.min(76 * scale, 660 / Math.max(n - 1, 1));
       const tx = Math.round(off * sp - W / 2), ty = Math.round(Math.pow(Math.abs(off), 1.6) * 3.2);
       const rot = (off * 3.5).toFixed(1);
-      const ok = myTurn && this.canPlay(c);
+      const ok = myTurn && !s.busy && this.canPlay(c);
       const hinted = ok && s.hintId === c.id;
       return {
         uri: this.face(c),
@@ -2083,7 +2086,7 @@ class Component extends DCLogic {
       message: s.message,
       opps,
       drawCount: drawable,
-      drawCursor: (myTurn && !s.hasDrawn) ? 'pointer' : 'default',
+      drawCursor: (myTurn && !s.hasDrawn && !s.busy) ? 'pointer' : 'default',
       playerCards, discards, pileStack,
       showBubble, bubbleText, bubbleLeft,
       showHist: histCards.length > 0 && s.phase === 'play',
@@ -2091,7 +2094,7 @@ class Component extends DCLogic {
       showWishChip: !!s.wish && (s.phase === 'play' || s.phase === 'wish'),
       wishUri: s.wish ? this.suitUri(s.wish) : '',
       wishName: s.wish ? this.suitName(s.wish) : '',
-      showTschau: !spectate && s.phase === 'play' && myHand.length === 1 && !meSeat.said && meSeat.status === 'ok',
+      showTschau: !spectate && !s.busy && s.phase === 'play' && myHand.length === 1 && !meSeat.said && meSeat.status === 'ok',
       showHint: myTurn && s.mode !== 'hotseat' && !spectate,
       hotseatName1: s.hotseatNames[0],
       hotseatName2: s.hotseatNames[1],
