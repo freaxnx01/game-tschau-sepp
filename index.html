@@ -1236,6 +1236,12 @@ class Component extends DCLogic {
     this.setState(patch);
   }
 
+  // Query: het dä Sitz e Siebni, wo er jetzt grad spiele chönnt?
+  canStackSeven(who) {
+    const seat = this.state.seats[who];
+    return !!seat && seat.hand.some(c => c.rank === '7' && this.canPlay(c));
+  }
+
   drawFor(who) {
     const s = this.state;
     if (s.phase !== 'play' || s.turn !== who || s.hasDrawn) return;
@@ -1270,10 +1276,15 @@ class Component extends DCLogic {
             return;
           }
         }
-        // Susch blibt dr Gwinner pendent: zieh isch nöd s Glichi wie ufgäh (#27).
-        // Dä wo zoge het darf jetzt no spiele — genau wie i ere normale
-        // Siebni-Chetti. D Rundä stoht erscht, wenn s würklich zrugg zum
-        // Gwinner chunt (siehe nextTurn).
+        // Susch blibt dr Gwinner pendent, aber nume wenn d Chetti no läbt:
+        // mit ere spielbare Siebni i dr Hand darf zruggstacket werde (#27).
+        // Ohni Siebni isch d Chetti tot — d Rundä stoht sofort, bevor dä wo
+        // zoge het no e Charte cha abwerfe (#33).
+        if (who !== w && !this.canStackSeven(who)) {
+          this.setState({ pendingWinner: null, bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
+          this.after(600, () => this.endRound(w));
+          return;
+        }
       }
     }
     if (!got.length) { this.setState({ message: this.M(who, 'noCards') }); this.after(700, () => this.nextTurn(who, { rank: 'x' })); return; }
@@ -1415,9 +1426,10 @@ class Component extends DCLogic {
       this.snd('draw');
       const pw = s.pendingWinner;
       this.setState({ pending7: 0, sevenChain: 0, pendingWinner: null, message: this.M(me, 'drewN', { n: s.pending7, chain: s.sevenChain }) });
-      // Glich wie bi drawFor(): d Chain isch brochen, wenn en andere Sitz zieht —
-      // oder wenn dr Gwinner sälber zieht, aber dr Stapel nüt meh hergit.
-      if (pw != null && (pw !== me || !got.length)) {
+      // Glich wie bi drawFor(): d Chetti isch tot, wenn en andere Sitz zoge het
+      // und käi spielbari Siebni übercho het — oder wenn dr Gwinner sälber
+      // zieht, aber dr Stapel nüt meh hergit.
+      if (pw != null && (pw !== me ? !this.canStackSeven(me) : !got.length)) {
         // Chain isch brochen, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
         this.setState({ bubble: { seat: pw, text: 'Sepp!' }, message: this.M(pw, 'sepp') });
         this.after(600, () => this.endRound(pw));
