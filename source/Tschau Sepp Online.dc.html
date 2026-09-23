@@ -1770,7 +1770,7 @@ class Component extends DCLogic {
         break;
       }
       case 'draw': this.drawFor(seat); break;
-      case 'pass': if (s.phase === 'play' && s.turn === seat && s.hasDrawn) this.nextTurn(seat, { rank: 'x' }); break;
+      case 'pass': if (!s.busy && s.phase === 'play' && s.turn === seat && s.hasDrawn) this.nextTurn(seat, { rank: 'x' }); break;
       case 'tschau':
         if (!s.busy && s.phase === 'play' && s.seats[seat].hand.length === 1 && !s.seats[seat].said) {
           this.snd('tschau');
@@ -1863,7 +1863,7 @@ class Component extends DCLogic {
       const sp = Math.min(76 * scale, 660 / Math.max(n - 1, 1));
       const tx = Math.round(off * sp - W / 2), ty = Math.round(Math.pow(Math.abs(off), 1.6) * 3.2);
       const rot = (off * 3.5).toFixed(1);
-      const ok = myTurn && this.canPlay(c);
+      const ok = myTurn && !s.busy && this.canPlay(c);
       const hinted = ok && s.hintId === c.id;
       return {
         uri: this.face(c),

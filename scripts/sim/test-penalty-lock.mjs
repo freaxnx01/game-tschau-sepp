@@ -87,7 +87,7 @@ function seat0With(rank, said) {
 
 function snapshot(c) {
   const s = c.state;
-  return { hand: s.seats[0].hand.length, turn: s.turn, cover: s.cover, hasDrawn: s.hasDrawn, phase: s.phase };
+  return { hand: s.seats[0].hand.length, turn: s.turn, cover: s.cover, hasDrawn: s.hasDrawn, phase: s.phase, busy: !!s.busy };
 }
 
 // Ei Mal mit eme Klick mittendrin, ei Mal ohni — beidi Läuf müend im gliche
@@ -110,6 +110,18 @@ function compare(label, rank, said) {
   return ok;
 }
 
+// Jedi Strof-Animation muess d Sperri am Änd au wieder löse — susch bliibt
+// dr Tisch für immer gsperrt, und `compare()` gsehts nöd, wil beidi Läuf
+// gliich falsch wärid.
+function lockAlwaysClears(label, rank, said) {
+  const { c, card } = seat0With(rank, said);
+  c.playCard(0, card);
+  advance(4000);
+  const ok = c.state.busy === false;
+  console.log(`${ok ? 'PASS' : 'FAIL'} Sperri löst sich wieder (${label}): busy=${c.state.busy} (erwartet false)`);
+  return ok;
+}
+
 // E Rundä wo mittendrin ändet derf d Sperri nöd i di nöchschti mitnäh —
 // susch isch dr Tisch für immer gsperrt.
 function roundClearsTheLock() {
@@ -125,6 +137,9 @@ let failed = false;
 if (!compare('Achti als letschti Charte', '8', true)) failed = true;
 if (!compare('«Tschau» vergässe', 'K', false)) failed = true;
 if (!compare('blutts Ass', 'A', true)) failed = true;
+if (!lockAlwaysClears('Achti', '8', true)) failed = true;
+if (!lockAlwaysClears('«Tschau» vergässe', 'K', false)) failed = true;
+if (!lockAlwaysClears('blutts Ass', 'A', true)) failed = true;
 if (!roundClearsTheLock()) failed = true;
 
 // Während em Sperr-Fenschter söll dr Tisch gar nöd zum Klicke iilade.
@@ -150,7 +165,25 @@ function tschauHiddenWhileBusy() {
   return ok;
 }
 
+// D Charte i dr Hand dörfed während dr Sperri au nöd zum Klicke iilade —
+// im Achti-Fenschter lit d Strofcharte scho i dr Hand, dr Sitz isch no dra.
+function handCardsNotInvitingWhileBusy() {
+  const { c, card } = seat0With('8', true);
+  c.playCard(0, card);
+  advance(1000);
+  // E garantiert spielbari Charte i d Hand lege — susch wär `cursor` scho
+  // wäge `canPlay()` uf 'default' und dr Test würd nüt beweise.
+  const seats = c.state.seats.map((x, i) => i === 0 ? { ...x, hand: [{ id: 'T3', suit: 'rose', rank: '9' }] } : x);
+  c.setState({ seats });
+  const playable = c.canPlay({ id: 'T3', suit: 'rose', rank: '9' });
+  const cards = c.renderVals().playerCards;
+  const ok = c.state.busy === true && playable && cards.length === 1 && cards[0].cursor === 'default';
+  console.log(`${ok ? 'PASS' : 'FAIL'} Handcharte gsperrt: busy=${c.state.busy} spielbar=${playable} cursor=${cards.map(x => x.cursor).join(',')}`);
+  return ok;
+}
+
 if (!renderLocked()) failed = true;
+if (!handCardsNotInvitingWhileBusy()) failed = true;
 if (!tschauHiddenWhileBusy()) failed = true;
 
 // Dr Gascht söll de glich gsperrti Tisch gseh wie dr Host.
