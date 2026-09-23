@@ -127,4 +127,30 @@ if (!compare('«Tschau» vergässe', 'K', false)) failed = true;
 if (!compare('blutts Ass', 'A', true)) failed = true;
 if (!roundClearsTheLock()) failed = true;
 
+// Während em Sperr-Fenschter söll dr Tisch gar nöd zum Klicke iilade.
+function renderLocked() {
+  const { c, card } = seat0With('8', true);
+  c.playCard(0, card);
+  advance(300);
+  const cursor = c.renderVals().drawCursor;
+  const ok = cursor === 'default';
+  console.log(`${ok ? 'PASS' : 'FAIL'} Zugstapel gsperrt: drawCursor=${cursor} (erwartet default)`);
+  return ok;
+}
+
+// E Hand us einere Charte ohni «Tschau» isch im Ass-Fenschter erreichbar —
+// dr Knopf söll det verschwinde, nöd bloss nüt tue.
+function tschauHiddenWhileBusy() {
+  const { c } = seat0With('8', true);
+  const seats = c.state.seats.map((x, i) => i === 0 ? { ...x, hand: [{ id: 'T2', rank: '6', suit: 'rose' }], said: false } : x);
+  c.setState({ seats, phase: 'play', turn: 0, busy: true });
+  const shown = c.renderVals().showTschau;
+  const ok = shown === false;
+  console.log(`${ok ? 'PASS' : 'FAIL'} Tschau-Knopf gsperrt: showTschau=${shown} (erwartet false)`);
+  return ok;
+}
+
+if (!renderLocked()) failed = true;
+if (!tschauHiddenWhileBusy()) failed = true;
+
 process.exit(failed ? 1 : 0);
