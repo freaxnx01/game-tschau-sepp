@@ -1278,9 +1278,12 @@ class Component extends DCLogic {
         }
         // Susch blibt dr Gwinner pendent, aber nume wenn d Chetti no läbt:
         // mit ere spielbare Siebni i dr Hand darf zruggstacket werde (#27).
-        // Ohni Siebni isch d Chetti tot — d Rundä stoht sofort, bevor dä wo
-        // zoge het no e Charte cha abwerfe (#33).
-        if (who !== w && !this.canStackSeven(who)) {
+        // Tot isch si erscht, wenn dä wo zoge het kei Siebni het UND dr
+        // Gwinner grad dr nöchscht Sitz isch — de stoht d Rundä sofort,
+        // bevor no e Charte cha abgworfe werde (#33). Bi drü oder vier
+        // Sitz chönd di dezwüsche no sälber e Siebni spiele, drum düred die
+        // ihre Zug ganz normal us.
+        if (who !== w && !this.canStackSeven(who) && this.nextOk(who) === w) {
           this.setState({ pendingWinner: null, bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
           this.after(600, () => this.endRound(w));
           return;
@@ -1425,13 +1428,16 @@ class Component extends DCLogic {
       const got = this.drawCards(me, s.pending7);
       this.snd('draw');
       const pw = s.pendingWinner;
-      this.setState({ pending7: 0, sevenChain: 0, pendingWinner: null, message: this.M(me, 'drewN', { n: s.pending7, chain: s.sevenChain }) });
+      this.setState({ pending7: 0, sevenChain: 0, message: this.M(me, 'drewN', { n: s.pending7, chain: s.sevenChain }) });
+      // Glich wie bi drawFor(): dr Gwinner isch nume denn erledigt, wenn er
+      // sälber zoge het — susch blibt sini Aaspruch bestoh.
+      if (pw === me) this.setState({ pendingWinner: null });
       // Glich wie bi drawFor(): d Chetti isch tot, wenn en andere Sitz zoge het
       // und käi spielbari Siebni übercho het — oder wenn dr Gwinner sälber
       // zieht, aber dr Stapel nüt meh hergit.
-      if (pw != null && (pw !== me ? !this.canStackSeven(me) : !got.length)) {
+      if (pw != null && (pw !== me ? (!this.canStackSeven(me) && this.nextOk(me) === pw) : !got.length)) {
         // Chain isch brochen, bevor's zrugg zum Gwinner isch cho — sini Rundä stoht.
-        this.setState({ bubble: { seat: pw, text: 'Sepp!' }, message: this.M(pw, 'sepp') });
+        this.setState({ pendingWinner: null, bubble: { seat: pw, text: 'Sepp!' }, message: this.M(pw, 'sepp') });
         this.after(600, () => this.endRound(pw));
         return;
       }

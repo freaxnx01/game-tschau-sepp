@@ -48,16 +48,18 @@ const FILLER = { id: 703, suit: 'eichle', rank: '9' };
 const DEEP = [{ id: 800, suit: 'eichle', rank: '6' }, { id: 801, suit: 'eichle', rank: 'K' }];
 const KING = { id: 810, suit: 'eichle', rank: 'K' };     // unplayable on a rose 7
 
-// Seat 0 goes out on a 7; seat 1 holds no 7 and must draw `pile`'s top two.
-function position({ p2hand, pile, opponent = 'local' }) {
+// Seat 0 goes out on a 7; the seats after it hold what `hands` says and must
+// draw `pile`'s top cards. `hands` covers seat 1 upwards — pass `p2hand` for the
+// common two-seat case.
+function position({ p2hand, hands, pile, opponent = 'local' }) {
+  const rest = hands || [p2hand];
+  const kinds = [opponent].concat(rest.slice(1).map(() => 'local'));
   timers = [];
   const c = new Component({ startcharte: '5' });
   c.state = {
     ...c.state, sound: false, mode: 'bot', difficulty: 'gwieft', mySeat: 1, roundNum: 1, starter: 0,
-    seats: [
-      { name: 'Eis', kind: 'local', hand: [], said: true, status: 'ok', score: 0, rounds: 0 },
-      { name: 'Zwei', kind: opponent, hand: [], said: false, status: 'ok', score: 0, rounds: 0 },
-    ],
+    seats: [{ name: 'Eis', kind: 'local', hand: [], said: true, status: 'ok', score: 0, rounds: 0 }].concat(
+      rest.map((h, i) => ({ name: 'Sitz' + (i + 2), kind: kinds[i], hand: [], said: false, status: 'ok', score: 0, rounds: 0 }))),
   };
   c.startRound(); drain(); timers = [];
   c.setState({
@@ -65,10 +67,8 @@ function position({ p2hand, pile, opponent = 'local' }) {
     hasDrawn: false, roundEnd: null,
     discard: [{ id: 900, suit: 'rose', rank: '6' }],
     pile: pile.slice(),
-    seats: [
-      { ...c.state.seats[0], kind: 'local', hand: [SEVEN_LAST], said: true },
-      { ...c.state.seats[1], kind: opponent, hand: p2hand.slice() },
-    ],
+    seats: [{ ...c.state.seats[0], kind: 'local', hand: [SEVEN_LAST], said: true }].concat(
+      rest.map((h, i) => ({ ...c.state.seats[i + 1], kind: kinds[i], hand: h.slice() }))),
   });
   c.playCard(0, SEVEN_LAST); drain();
   return c;
@@ -108,6 +108,8 @@ function position({ p2hand, pile, opponent = 'local' }) {
     'roundEnd=' + JSON.stringify(s.roundEnd && s.roundEnd.winner));
   check('the bot stacks the 7 back at the winner', s.pending7 === 2 && s.turn === 0,
     'pending7=' + s.pending7 + ' turn=' + s.turn);
+  check('the winner stays pending while the chain lives', s.pendingWinner === 0,
+    'pendingWinner=' + s.pendingWinner);
 }
 
 {
@@ -129,6 +131,31 @@ function position({ p2hand, pile, opponent = 'local' }) {
   check('an unservable penalty still ends the round (#16)',
     !!c.state.roundEnd && c.state.roundEnd.winner === 0,
     'roundEnd=' + JSON.stringify(c.state.roundEnd && c.state.roundEnd.winner));
+}
+
+{
+  // 6) Drü Sitz: Sitz 1 cha nöd stacke, aber Sitz 2 het no e Siebni und isch
+  //    dra, bevor s zrugg zum Gwinner chunt. D Chetti isch also NÖD tot.
+  const OPP_SEVEN = { id: 820, suit: 'schilte', rank: '7' };
+  const c = position({ hands: [[KING], [OPP_SEVEN]], pile: [...DEEP, PLAYABLE, FILLER] });
+  c.drawFor(1); drain();
+  const s = c.state;
+  check('with a seat still to come the round does not end early', !s.roundEnd && s.phase === 'play',
+    'roundEnd=' + JSON.stringify(s.roundEnd && s.roundEnd.winner) + ' phase=' + s.phase);
+  check('the winner is still pending for that seat', s.pendingWinner === 0,
+    'pendingWinner=' + s.pendingWinner);
+}
+
+{
+  // 7) Drü Sitz, aber jetzt zieht dr Sitz DIREKT vor em Gwinner: jetzt isch
+  //    d Chetti würklich tot und d Rundä stoht sofort.
+  const c = position({ hands: [[PLAYABLE], [KING]], pile: [...DEEP, FILLER, { id: 704, suit: 'eichle', rank: '6' }] });
+  c.setState({ turn: 2, pendingWinner: 0, pending7: 2 });
+  c.drawFor(2); drain();
+  const s = c.state;
+  check('the last seat before the winner ends the round at once',
+    !!s.roundEnd && s.roundEnd.winner === 0,
+    'roundEnd=' + JSON.stringify(s.roundEnd && s.roundEnd.winner) + ' phase=' + s.phase);
 }
 
 process.exit(failed ? 1 : 0);

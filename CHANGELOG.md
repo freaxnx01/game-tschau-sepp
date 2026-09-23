@@ -8,9 +8,11 @@ All notable changes to this project are documented here, following
 
 ### Fixed
 
-- E Rundä stoht jetzt sofort, wenn öpper uf e letschti Siebni zieh muess und
-  käi Siebni übercho hät — vorhär hät er no schnäll e Charte chönne abwerfe,
-  was em Gwinner Pünkt gchoschtet hät (#33)
+- E Rundä stoht jetzt sofort, wenn dä wo uf e letschti Siebni zieh muess käi
+  Siebni übercho hät und dr Gwinner grad dr nöchscht Sitz isch — vorhär hät er
+  no schnäll e Charte chönne abwerfe, was em Gwinner Pünkt gchoschtet hät (#33).
+  Bi drü oder vier Spiler ändert sich nüt: wer dezwüsche sitzt, cha sälber no e
+  Siebni spiele und drum lauft sin Zug ganz normal
 - Bots dörfed e zogni Siebni jetzt au zruggstacke, glich wie Mänsche — vorhär
   hät dr Bot d Rundä abgäh, au wenn er grad e Siebni zoge hät
 
