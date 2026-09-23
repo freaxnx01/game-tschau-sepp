@@ -8,13 +8,9 @@ All notable changes to this project are documented here, following
 
 ### Fixed
 
-- E Rundä stoht jetzt sofort, wenn dä wo uf e letschti Siebni zieh muess käi
-  Siebni übercho hät und dr Gwinner grad dr nöchscht Sitz isch — vorhär hät er
-  no schnäll e Charte chönne abwerfe, was em Gwinner Pünkt gchoschtet hät (#33).
-  Bi drü oder vier Spiler ändert sich nüt: wer dezwüsche sitzt, cha sälber no e
-  Siebni spiele und drum lauft sin Zug ganz normal
-- Bots dörfed e zogni Siebni jetzt au zruggstacke, glich wie Mänsche — vorhär
-  hät dr Bot d Rundä abgäh, au wenn er grad e Siebni zoge hät
+- A round now ends the moment a forced 7-penalty draw makes the chain unwinnable — when the drawer holds no 7 and the winner is the very next seat, they no longer get to shed a card first, which used to cost the winner points (#33)
+- Bots may now stack a 7 they drew as a penalty, exactly as a human can — a bot used to concede the round even when it had just drawn one (#33)
+- Clicking the draw pile while a penalty is being dealt out no longer counts: an 8 played as your last card, a forgotten «Tschau» or a bare Ass used to hand you two cards instead of one — and with the Ass the obligation to cover it vanished entirely (#32)
 
 ## [0.5.0] - 2026-09-17
 
