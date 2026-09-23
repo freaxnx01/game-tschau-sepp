@@ -52,13 +52,23 @@ opens only when the drawer has *some* playable card but no 7.
 One rule, applied identically in both paths:
 
 > After a forced 7-penalty draw by a seat that is not the pending winner, the
-> drawer keeps the turn **only if they now hold a playable 7**. Otherwise the
-> chain is dead and the round is awarded to the winner immediately.
+> round is awarded immediately **only if the drawer holds no playable 7 and the
+> pending winner is the very next seat**. In every other case the drawer keeps
+> the turn and the round resolves in `nextTurn()` as before.
 
-Expressed as a query on the post-draw hand:
+**The seat-order half was missing from the first draft of this spec**, which
+assumed two players throughout. With three or four seats a player sitting
+between the drawer and the winner can still play a 7 of their own and pull the
+winner back into the round — exactly what #27 established — so the chain is not
+provably dead just because the immediate drawer cannot stack. Awarding the round
+there cuts those seats out of a turn they are entitled to. Caught in review of
+PR #34; see the Consequences section.
+
+Expressed as a query on the post-draw hand, plus a seat-order test:
 
 ```javascript
 const canStack = this.state.seats[who].hand.some(c => c.rank === '7' && this.canPlay(c));
+const winnerIsNext = this.nextOk(who) === w;
 ```
 
 `pending7` has already been cleared at this point, so `canPlay()` judges the 7
@@ -69,8 +79,8 @@ check stays correct if the top card ever changes.
 ### `drawFor()`
 
 In the `pendingWinner != null` block, the `who !== w` case gains the check: no
-playable 7 means clear `pendingWinner`, show the winner's `Sepp!` bubble and
-`endRound(w)` after 600 ms — the same shape the `who === w` exhausted-pile case
+playable 7 **and** the winner sitting next means clear `pendingWinner`, show the
+winner's `Sepp!` bubble and `endRound(w)` after 600 ms — the same shape the `who === w` exhausted-pile case
 already uses. With a playable 7 the winner stays pending exactly as today, and
 the chain can be passed back.
 
@@ -79,8 +89,16 @@ The `who === w` case (the winner drew for themselves, #16) is untouched.
 ### `botTurn()`
 
 The condition `pw != null && (pw !== me || !got.length)` becomes: end the round
-when the winner is someone else **and** the bot cannot stack, or when the bot is
-the winner and drew nothing. A bot that drew a playable 7 now continues into the
+when the winner is someone else **and** the bot cannot stack **and** the winner
+sits next, or when the bot is the winner and drew nothing.
+
+`botTurn` also has to stop clearing `pendingWinner` in the setState that precedes
+that test. That was harmless while `pw !== me` always conceded on the spot, but
+once a bot can keep the chain alive by stacking, an eagerly cleared winner is a
+claim silently thrown away — and with 3–4 seats nothing then awards the round at
+all, which is the unresolvable state #16 was filed for. It now mirrors
+`drawFor()`: the winner is cleared on conceding, or when the winner drew for
+themselves. A bot that drew a playable 7 now continues into the
 existing `after(1100)` block; `botPick()` prefers a 7 when an opponent holds two
 cards or fewer (`:1461-1462`), and a card-less winner satisfies that, so the bot
 stacks back rather than sitting on it.
@@ -127,8 +145,9 @@ This repo ships on sim-suite evidence; no in-browser playtest gates the change.
 
 ## Acceptance criteria
 
-1. Human drawer, no playable 7 after the forced draw: the round is awarded to
-   the winner immediately and the drawer never gets to discard.
+1. Human drawer, no playable 7 after the forced draw, winner sitting next: the
+   round is awarded to the winner immediately and the drawer never gets to
+   discard.
 2. Human drawer, playable 7 after the draw: unchanged — the winner stays pending
    and the 7 can be played back at them.
 3. Bot drawer, playable 7 after the draw: the round stays open and the bot plays
@@ -136,6 +155,9 @@ This repo ships on sim-suite evidence; no in-browser playtest gates the change.
 4. Bot drawer, no playable 7: unchanged — the round is awarded immediately.
 5. The winner drawing for themselves with an exhausted pile still ends the round
    (#16 does not regress).
+5b. Three or four seats, a seat between the drawer and the winner: the round does
+   **not** end early, that seat takes its turn, and `pendingWinner` survives — including
+   across a bot that keeps the chain alive by stacking a drawn 7.
 6. The losing hand scored at round end includes the card the drawer would
    previously have discarded.
 7. `scripts/sim/test-dead-chain.mjs` covers criteria 1–5 and fails against the

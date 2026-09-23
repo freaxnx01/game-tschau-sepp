@@ -2,6 +2,12 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Superseded in part by review of PR #34.** The rule below needs a second
+> condition — the round only ends early when the pending winner is the *very next*
+> seat — and `botTurn()` must stop clearing `pendingWinner` before the liveness
+> check. Both are corrected in the code blocks here and in the spec; the shipped
+> implementation is commit `0966f8c` on `fix/33-dead-seven-chain`.
+
 **Goal:** After a forced 7-penalty draw by a seat that is not the pending winner, the drawer keeps the turn only if they now hold a playable 7; otherwise the round is awarded immediately, before the drawer can shed a card.
 
 **Architecture:** One new query method, `canStackSeven(who)`, answers "can this seat play a 7 right now?". `drawFor()` uses it to decide whether the pending winner stays pending or takes the round at once (#33); `botTurn()` uses the same call so a bot that drew a 7 finally gets to play it, which is the #27 fix that never reached the bot path. No other resolution logic changes.
@@ -240,7 +246,7 @@ with:
         // mit ere spielbare Siebni i dr Hand darf zruggstacket werde (#27).
         // Ohni Siebni isch d Chetti tot — d Rundä stoht sofort, bevor dä wo
         // zoge het no e Charte cha abwerfe (#33).
-        if (who !== w && !this.canStackSeven(who)) {
+        if (who !== w && !this.canStackSeven(who) && this.nextOk(who) === w) {
           this.setState({ pendingWinner: null, bubble: { seat: w, text: 'Sepp!' }, message: this.M(w, 'sepp') });
           this.after(600, () => this.endRound(w));
           return;
@@ -260,7 +266,7 @@ In `botTurn()`, in the `!cand.length && s.pending7 > 0` branch, change:
 to:
 
 ```javascript
-      if (pw != null && (pw !== me ? !this.canStackSeven(me) : !got.length)) {
+      if (pw != null && (pw !== me ? (!this.canStackSeven(me) && this.nextOk(me) === pw) : !got.length)) {
 ```
 
 Read as: another seat is the pending winner and this bot cannot stack → concede; or this bot *is* the winner and the pile gave it nothing → concede. A bot holding a playable 7 falls through to the existing `after(1100)` block, where `botPick()` prefers a 7 whenever an opponent holds two cards or fewer — and a card-less winner satisfies that — so the chain goes back.
