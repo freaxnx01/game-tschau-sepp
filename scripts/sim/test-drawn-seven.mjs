@@ -119,14 +119,16 @@ const OBER = { id: 811, suit: 'rose', rank: 'O' };
 }
 
 {
-  // Responding with a non-7 also breaks the chain: the winner takes the round.
+  // Drawing a non-7 breaks the chain outright: the winner takes the round
+  // before the drawer can play anything (#33).
   const c = position({ p2hand: [KING, OBER], pile: [...DEEP, { id: 704, suit: 'rose', rank: '9' }, FILLER] });
   c.drawFor(1); drain();
-  const playable = c.state.seats[1].hand.filter(x => c.canPlay(x) && x.rank !== '7');
-  if (playable.length) { c.playCard(1, playable[0]); drain(); }
-  check('playing a non-7 hands the round to the winner',
+  check('a non-7 draw hands the round to the winner at once',
     !!c.state.roundEnd && c.state.roundEnd.winner === 0,
     'roundEnd=' + JSON.stringify(c.state.roundEnd && c.state.roundEnd.winner));
+  const playable = c.state.seats[1].hand.filter(x => c.canPlay(x) && x.rank !== '7');
+  check('the drawer still holds the card it would have discarded', playable.length > 0,
+    'playable=' + playable.length);
 }
 
 {
