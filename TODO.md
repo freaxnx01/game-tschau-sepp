@@ -6,3 +6,4 @@
 - [ ] Multiplayer P2P test: home LAN PC ↔ phone on mobile data
 - [ ] Multiplayer relay/server fallback when P2P isn't possible (is this still doable on GitHub Pages?)
 - [x] Verify card integrity: 36 cards, 4 colours, each unique card guaranteed to appear exactly once per game — in both single-player and multiplayer
+- [ ] Refactor: extract the repeated "Sepp! bubble + endRound after 600ms" sequence — five copies across drawFor/botTurn/nextTurn/playCard (noticed while fixing #33)
