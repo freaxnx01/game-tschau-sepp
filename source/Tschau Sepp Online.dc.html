@@ -1304,7 +1304,7 @@ class Component extends DCLogic {
     if (this.state.mode === 'spectate') return;
     const s = this.state;
     if (s.mode === 'guest') {
-      if (s.phase === 'play' && s.turn === s.mySeat && !s.hasDrawn) this.send({ t: 'draw' });
+      if (!s.busy && s.phase === 'play' && s.turn === s.mySeat && !s.hasDrawn) this.send({ t: 'draw' });
       return;
     }
     this.drawFor(s.mySeat);
@@ -1804,7 +1804,7 @@ class Component extends DCLogic {
         myHand: s.seats[i] ? s.seats[i].hand : [],
         discard: s.discard.slice(-3), pileN: s.pile.length, rsN: s.reshuffleCount || 0,
         turn: s.turn, wish: s.wish, pending7: s.pending7, pendingWinner: s.pendingWinner, cover: s.cover, wisher: s.wisher,
-        hasDrawn: s.turn === i ? s.hasDrawn : false,
+        hasDrawn: s.turn === i ? s.hasDrawn : false, busy: !!s.busy,
         roundNum: s.roundNum, roundEnd: s.roundEnd,
         lastM: this.lastM || null, bubble: s.bubble, history: s.history,
         snd: this.lastSnd || null,
@@ -1835,7 +1835,7 @@ class Component extends DCLogic {
     this.setState({
       phase: d.phase, mySeat: d.mySeat, seats, discard: d.discard, pile: new Array(d.pileN).fill(0),
       turn: d.turn, wish: d.wish, pending7: d.pending7, pendingWinner: d.pendingWinner, cover: d.cover, wisher: d.wisher,
-      hasDrawn: d.hasDrawn, roundNum: d.roundNum, roundEnd: d.roundEnd,
+      hasDrawn: d.hasDrawn, busy: !!d.busy, roundNum: d.roundNum, roundEnd: d.roundEnd,
       message, bubble: d.bubble, history: d.history || [], mp: null,
     });
   }

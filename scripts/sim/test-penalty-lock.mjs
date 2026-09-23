@@ -153,4 +153,38 @@ function tschauHiddenWhileBusy() {
 if (!renderLocked()) failed = true;
 if (!tschauHiddenWhileBusy()) failed = true;
 
+// Dr Gascht söll de glich gsperrti Tisch gseh wie dr Host.
+function busyReachesTheGuest() {
+  const { c } = seat0With('8', true);
+  c.setState({ mode: 'host', phase: 'play', busy: true });
+  const sent = [];
+  c.guests = { 1: { chan: { readyState: 'open', send: (m) => sent.push(JSON.parse(m)) } } };
+  c.pushState();
+  const inSnap = sent.length === 1 && sent[0].busy === true;
+
+  const guest = seat0With('8', true).c;
+  guest.setState({ mode: 'guest' });
+  if (sent.length) guest.applySnap(sent[0]);
+  const applied = guest.state.busy === true;
+
+  const ok = inSnap && applied;
+  console.log(`${ok ? 'PASS' : 'FAIL'} busy im Snapshot: gsendet=${inSnap} aagwendet=${applied}`);
+  return ok;
+}
+
+// Dr Gascht söll de Klick gar nöd erscht abschicke.
+function guestDoesNotSendWhileBusy() {
+  const { c } = seat0With('8', true);
+  const sent = [];
+  c.send = (m) => sent.push(m);
+  c.setState({ mode: 'guest', phase: 'play', turn: 0, mySeat: 0, hasDrawn: false, busy: true });
+  c.drawClick();
+  const ok = sent.length === 0;
+  console.log(`${ok ? 'PASS' : 'FAIL'} Gascht schickt nüt: ${sent.length} Nachricht(e) (erwartet 0)`);
+  return ok;
+}
+
+if (!busyReachesTheGuest()) failed = true;
+if (!guestDoesNotSendWhileBusy()) failed = true;
+
 process.exit(failed ? 1 : 0);
