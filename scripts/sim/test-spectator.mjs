@@ -121,14 +121,27 @@ function spectate() {
 
 {
   // The whole point: it plays itself, at watchable pace, without a human.
+  //
+  // Pacing is asserted as the GAP between table events, not as the round's
+  // total length. A round's length is set by the deal — measured over 200
+  // rounds it ranges from 12s to 201s, so a lower bound on it fails on ~8% of
+  // deals for no reason connected to pacing. The gap is what maybeBot()
+  // actually guarantees (900-1700ms, or an explicit 250-1400ms), and it never
+  // dropped below 700ms across those same 200 rounds.
+  const events = [];
+  for (const m of ['playCard', 'drawCards', 'drawUntilCover']) {
+    const orig = Component.prototype[m];
+    Component.prototype[m] = function (...args) { events.push(now); return orig.apply(this, args); };
+  }
   const c = spectate();
-  const t0 = now;
   drain();
   const s = c.state;
   check('the round plays itself to an end', s.phase === 'roundEnd' || !!s.roundEnd,
     'phase=' + s.phase);
-  check('pacing stays human-watchable', (now - t0) > 20000,
-    'simulated ' + ((now - t0) / 1000).toFixed(1) + 's');
+  let minGap = Infinity;
+  for (let i = 1; i < events.length; i++) minGap = Math.min(minGap, events[i] - events[i - 1]);
+  check('pacing stays human-watchable', events.length > 1 && minGap >= 500,
+    events.length + ' events, closest ' + minGap + 'ms apart');
   const all = [...s.seats.flatMap(x => x.hand), ...s.pile, ...s.discard];
   check('all 36 cards are accounted for', all.length === 36, 'total=' + all.length);
 }
