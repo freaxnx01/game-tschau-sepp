@@ -1466,15 +1466,28 @@ class Component extends DCLogic {
     }
     this.after(250, () => this.playCard(me, this.botPick(cand)));
   }
+  // Query: blibt nach dere Charte e Deckig i dr Hand? Für alles usser eme Ass
+  // isch d Frag gegenstandslos — nume es Ass muess mer sälber decke.
+  aceIsSafe(c, hand) {
+    if (c.rank !== 'A') return true;
+    return hand.some(o => o.id !== c.id && (o.rank === 'A' || o.rank === 'U' || o.suit === c.suit));
+  }
+
   botPick(cand) {
     const s = this.state; const me = s.turn;
     const hand = s.seats[me].hand;
-    if (this.seatDifficulty(me) === 'gmuetlich') return cand[Math.floor(Math.random() * cand.length)];
+    if (this.seatDifficulty(me) === 'gmuetlich') {
+      // Zuefällig — aber nöd sälbstmörderisch: es Ass wo mer nachhär nöd cha
+      // decke, isch au für e gmüetliche Bot kei Zug (#36).
+      const ok = cand.filter(c => this.aceIsSafe(c, hand));
+      const pool = ok.length ? ok : cand;
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
     const oppV = s.seats.filter((x, i) => i !== me && x.status === 'ok').map(x => x.hand.length);
     const oppMin = oppV.length ? Math.min.apply(null, oppV) : 99;
     const nonJ = cand.filter(c => c.rank !== 'U');
     let pool = (nonJ.length && hand.length > 1) ? nonJ : cand;
-    const safe = pool.filter(c => c.rank !== 'A' || hand.some(o => o.id !== c.id && (o.rank === 'A' || o.rank === 'U' || o.suit === c.suit)));
+    const safe = pool.filter(c => this.aceIsSafe(c, hand));
     if (safe.length) pool = safe;
     if (s.cover != null) { pool = pool.slice().sort((a, b) => (a.rank === 'A' ? 1 : 0) - (b.rank === 'A' ? 1 : 0)); return pool[0]; }
     if (oppMin <= 2) { const seven = pool.find(c => c.rank === '7'); if (seven) return seven; }
