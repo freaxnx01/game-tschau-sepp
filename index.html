@@ -262,14 +262,18 @@
             </sc-if>
 
             <sc-if value="{{ mpShowCode }}" hint-placeholder-val="{{ false }}">
-              <div style="font-size: 16px; font-weight: 800; color: #4a3416; margin-top: 16px;">1 · Schick dä Code am nöchste Spieler:</div>
-              <textarea readOnly="{{ true }}" value="{{ mpMyCode }}" style="width: 100%; height: 64px; margin-top: 6px; font-family: monospace; font-size: 10px; line-height: 1.3; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 10px; padding: 8px 10px; resize: none; word-break: break-all;"></textarea>
-              <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
-                <button onClick="{{ copyCode }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 18px; cursor: pointer;" style-hover="filter: brightness(1.15);">{{ copyLabel }}</button>
+              <div style="font-size: 16px; font-weight: 800; color: #4a3416; margin-top: 16px;">1 · Schick dä Link am nöchste Spieler:</div>
+              <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px; flex-wrap: wrap;">
+                <button onClick="{{ copyJoinLink }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 18px; cursor: pointer;" style-hover="filter: brightness(1.15);">{{ copyLinkLabel }}</button>
+                <button onClick="{{ toggleCode }}" style="font-family: inherit; font-size: 14px; font-weight: 700; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 8px; padding: 6px 14px; cursor: pointer;" style-hover="filter: brightness(0.95);">Code zeige</button>
                 <sc-if value="{{ showMpCountdown }}" hint-placeholder-val="{{ false }}">
                   <span style="font-size: 14px; font-weight: 800; color: #7c1f26;">Dä Code isch no {{ mpCountdown }} gültig</span>
                 </sc-if>
               </div>
+              <sc-if value="{{ mpCodeVisible }}" hint-placeholder-val="{{ false }}">
+                <textarea readOnly="{{ true }}" value="{{ mpMyCode }}" style="width: 100%; height: 64px; margin-top: 6px; font-family: monospace; font-size: 10px; line-height: 1.3; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 10px; padding: 8px 10px; resize: none; word-break: break-all;"></textarea>
+                <button onClick="{{ copyCode }}" style="margin-top: 6px; font-family: inherit; font-size: 15px; font-weight: 700; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 18px; cursor: pointer;" style-hover="filter: brightness(1.15);">{{ copyLabel }}</button>
+              </sc-if>
               <div style="font-size: 16px; font-weight: 800; color: #4a3416; margin-top: 16px;">2 · Er schickt dir en Antwort-Code zrugg — füeg en do ii:</div>
               <textarea onChange="{{ setPeer }}" placeholder="Antwort-Code do iifüege…" style="width: 100%; height: 64px; margin-top: 6px; font-family: monospace; font-size: 10px; line-height: 1.3; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 10px; padding: 8px 10px; resize: none; word-break: break-all;"></textarea>
               <button onClick="{{ mpConnectGo }}" style="margin-top: 10px; width: 100%; font-family: inherit; font-size: 17px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 12px; padding: 11px 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12);">Spieler verbinde</button>
@@ -292,7 +296,7 @@
               </div>
             </div>
             <div style="font-size: 16px; font-weight: 800; color: #4a3416; margin-top: 16px;">Füeg dr Code vom Host ii:</div>
-            <textarea onChange="{{ setPeer }}" placeholder="Code do iifüege…" style="width: 100%; height: 64px; margin-top: 6px; font-family: monospace; font-size: 10px; line-height: 1.3; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 10px; padding: 8px 10px; resize: none; word-break: break-all;"></textarea>
+            <textarea onChange="{{ setPeer }}" value="{{ mpPeerCode }}" placeholder="Code do iifüege…" style="width: 100%; height: 64px; margin-top: 6px; font-family: monospace; font-size: 10px; line-height: 1.3; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 10px; padding: 8px 10px; resize: none; word-break: break-all;"></textarea>
             <button onClick="{{ mpJoinGo }}" style="margin-top: 10px; width: 100%; font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 12px; padding: 12px 24px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12);">Antwort-Code erstelle</button>
           </sc-if>
 
@@ -729,6 +733,7 @@ class Component extends DCLogic {
     this.mpInt = setInterval(() => this.mpTickCheck(), 1000);
     const stored = this.storedStartCards();
     if (stored != null) this.setState({ startCards: stored });
+    this.readJoinLink();
   }
   componentWillUnmount() {
     this.mounted = false; this.tk++;
@@ -1763,6 +1768,33 @@ class Component extends DCLogic {
     if (d.t === 'full') { this.netDrop('S Spiel isch scho voll (max. 4 Spieler).'); return; }
     if (d.t === 'bye') { this.netDrop('Dr Host het s Spiel beändet.'); return; }
   }
+  // Query: d Iiladigs-URL für dä Offer-Code — s Fragment gaht nie an Server.
+  joinLinkFor(code) {
+    const l = (typeof window !== 'undefined' && window.location) || {};
+    return (l.origin || '') + (l.pathname || '') + '#join=' + encodeURIComponent(code || '');
+  }
+  // Command: es #join= im URL uufnäh, s Fragment putze und uf «biitrette» stelle.
+  // Verbunde wird erscht, wenn dr Spiler sälber tippt — es Link chunt vo überall.
+  readJoinLink() {
+    const l = (typeof window !== 'undefined' && window.location) || {};
+    const hash = l.hash || '';
+    const m = hash.match(/^#join=(.+)$/);
+    if (!m) return;
+    let code = '';
+    try { code = decodeURIComponent(m[1]); } catch (e) { code = m[1]; }
+    try { window.history.replaceState(null, '', (l.pathname || '') + (l.search || '')); } catch (e) { }
+    this.peerCode = code;
+    this.setState({ myName: this.state.myName || this.funnyName(), mp: { stage: 'join-paste', fromLink: true, peerCode: code } });
+  }
+  copyJoinLink() {
+    const code = this.state.mp && this.state.mp.myCode;
+    if (!code) return;
+    const done = () => {
+      this.setState({ mp: { ...this.state.mp, copiedLink: true } });
+      this.after(1600, () => { if (this.state.mp) this.setState({ mp: { ...this.state.mp, copiedLink: false } }); });
+    };
+    try { navigator.clipboard.writeText(this.joinLinkFor(code)).then(done, () => { }); } catch (e) { }
+  }
   copyCode() {
     const code = this.state.mp && this.state.mp.myCode;
     if (!code) return;
@@ -2066,6 +2098,11 @@ class Component extends DCLogic {
       lobbyPlayers: seats.map((x, i) => ({ name: x.name, tag: i === 0 ? 'du · Host' : 'verbunde' })),
       guestLobbyPlayers: (mp && mp.lobby && mp.lobby.names || []).map((n, i) => ({ name: n, tag: i === (mp.lobby.you) ? 'du' : (i === 0 ? 'Host' : 'verbunde') })),
       copyLabel: mp && mp.copied ? 'Kopiert!' : 'Code kopiere',
+      copyLinkLabel: mp && mp.copiedLink ? 'Kopiert!' : 'Link kopiere',
+      copyJoinLink: () => this.copyJoinLink(),
+      mpCodeVisible: !!(mp && mp.codeVisible),
+      toggleCode: () => this.setState({ mp: { ...(this.state.mp || {}), codeVisible: !(this.state.mp || {}).codeVisible } }),
+      mpPeerCode: (mp && mp.peerCode) || '',
       myName: s.myName,
       setName: (e) => this.setState({ myName: e.target.value, myNameCustom: true }),
       randomName: () => this.setState({ myName: this.funnyName(), myNameCustom: false }),
@@ -2078,7 +2115,12 @@ class Component extends DCLogic {
       makeCode: () => this.mpMakeCode(),
       startMp: () => this.mpStartGame(),
       copyCode: () => this.copyCode(),
-      setPeer: (e) => { this.peerCode = e.target.value; },
+      setPeer: (e) => {
+        this.peerCode = e.target.value;
+        // S Feld isch jetzt an mpPeerCode bunde — ohni das würd jede Tastedruck
+        // vom alte Wärt überschriebe.
+        this.setState({ mp: { ...(this.state.mp || {}), peerCode: e.target.value } });
+      },
       // table
       feltBg: 'radial-gradient(ellipse at 50% 32%, ' + felt + ', color-mix(in oklab, ' + felt + ', black 48%))',
       cardW: W, cardH: H, botW: bW, handH: H + 46, discardW, discardCX,

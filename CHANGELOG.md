@@ -6,6 +6,10 @@ All notable changes to this project are documented here, following
 
 ## [Unreleased]
 
+### Added
+
+- Host an online game by sharing a link instead of a code: the guest opens it and the offer is already filled in, one tap from joining (#41)
+
 ### Fixed
 
 - A round now ends the moment a forced 7-penalty draw makes the chain unwinnable — when the drawer holds no 7 and the winner is the very next seat, they no longer get to shed a card first, which used to cost the winner points (#33)
