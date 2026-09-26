@@ -265,7 +265,7 @@
               <div style="font-size: 16px; font-weight: 800; color: #4a3416; margin-top: 16px;">1 · Schick dä Link am nöchste Spieler:</div>
               <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px; flex-wrap: wrap;">
                 <button onClick="{{ copyJoinLink }}" style="font-family: inherit; font-size: 15px; font-weight: 700; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 1px solid #3a2512; border-radius: 8px; padding: 7px 18px; cursor: pointer;" style-hover="filter: brightness(1.15);">{{ copyLinkLabel }}</button>
-                <button onClick="{{ toggleCode }}" style="font-family: inherit; font-size: 14px; font-weight: 700; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 8px; padding: 6px 14px; cursor: pointer;" style-hover="filter: brightness(0.95);">Code zeige</button>
+                <button onClick="{{ toggleCode }}" style="font-family: inherit; font-size: 14px; font-weight: 700; color: #4a3416; background: #fdf8ea; border: 2px solid #b8923a; border-radius: 8px; padding: 6px 14px; cursor: pointer;" style-hover="filter: brightness(0.95);">{{ toggleCodeLabel }}</button>
                 <sc-if value="{{ showMpCountdown }}" hint-placeholder-val="{{ false }}">
                   <span style="font-size: 14px; font-weight: 800; color: #7c1f26;">Dä Code isch no {{ mpCountdown }} gültig</span>
                 </sc-if>
@@ -1784,7 +1784,7 @@ class Component extends DCLogic {
     try { code = decodeURIComponent(m[1]); } catch (e) { code = m[1]; }
     try { window.history.replaceState(null, '', (l.pathname || '') + (l.search || '')); } catch (e) { }
     this.peerCode = code;
-    this.setState({ myName: this.state.myName || this.funnyName(), mp: { stage: 'join-paste', fromLink: true, peerCode: code } });
+    this.setState({ myName: this.state.myName || this.funnyName(), mp: { stage: 'join-paste' } });
   }
   copyJoinLink() {
     const code = this.state.mp && this.state.mp.myCode;
@@ -2101,8 +2101,12 @@ class Component extends DCLogic {
       copyLinkLabel: mp && mp.copiedLink ? 'Kopiert!' : 'Link kopiere',
       copyJoinLink: () => this.copyJoinLink(),
       mpCodeVisible: !!(mp && mp.codeVisible),
+      toggleCodeLabel: mp && mp.codeVisible ? 'Code verstecke' : 'Code zeige',
       toggleCode: () => this.setState({ mp: { ...(this.state.mp || {}), codeVisible: !(this.state.mp || {}).codeVisible } }),
-      mpPeerCode: (mp && mp.peerCode) || '',
+      // S Feld zeigt, was au würkli abgschickt wird. Über de State ging das
+      // schief: mpJoin()s catch und dr Ablauf-Handler baued `mp` neu uf und
+      // hend `peerCode` verlore — s Feld leer, dr alt Code aber no scharf.
+      mpPeerCode: this.peerCode || '',
       myName: s.myName,
       setName: (e) => this.setState({ myName: e.target.value, myNameCustom: true }),
       randomName: () => this.setState({ myName: this.funnyName(), myNameCustom: false }),
@@ -2115,12 +2119,7 @@ class Component extends DCLogic {
       makeCode: () => this.mpMakeCode(),
       startMp: () => this.mpStartGame(),
       copyCode: () => this.copyCode(),
-      setPeer: (e) => {
-        this.peerCode = e.target.value;
-        // S Feld isch jetzt an mpPeerCode bunde — ohni das würd jede Tastedruck
-        // vom alte Wärt überschriebe.
-        this.setState({ mp: { ...(this.state.mp || {}), peerCode: e.target.value } });
-      },
+      setPeer: (e) => { this.peerCode = e.target.value; },
       // table
       feltBg: 'radial-gradient(ellipse at 50% 32%, ' + felt + ', color-mix(in oklab, ' + felt + ', black 48%))',
       cardW: W, cardH: H, botW: bW, handH: H + 46, discardW, discardCX,

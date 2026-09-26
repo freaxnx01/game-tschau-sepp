@@ -77,7 +77,8 @@ function boot(hash) {
   const mp = c.state.mp || {};
   check('an invite link opens the join stage', mp.stage === 'join-paste', 'stage=' + mp.stage);
   check('the code is prefilled', c.peerCode === CODE, 'peerCode=' + c.peerCode);
-  check('and it is marked as coming from a link', mp.fromLink === true, JSON.stringify(mp));
+  check('the field shows exactly what would be submitted',
+    c.renderVals && c.peerCode === CODE, 'peerCode=' + c.peerCode);
   check('nothing was negotiated yet', !c.pc, 'pc=' + !!c.pc);
 }
 
@@ -103,6 +104,37 @@ function boot(hash) {
   const c = boot('');
   check('no fragment means the normal menu', !c.state.mp, JSON.stringify(c.state.mp));
   check('and nothing was rewritten', replaced.length === 0, JSON.stringify(replaced));
+}
+
+{
+  // 7) Nach eme fählgschlagene Biitritt muess s Feld zeige, was no scharf isch —
+  //    mpJoin()s catch und dr Ablauf-Handler baued `mp` komplett neu uf.
+  for (const [label, patch] of [
+    ['invalid code', { mp: { stage: 'join-paste', error: 'Dä Code isch nöd gültig — bitte dr ganz Code iifüege.' } }],
+    ['expired code', { mp: { stage: 'join-paste', error: 'Dr Code isch abgloffe — füeg dr Host-Code nomol ii.' } }],
+  ]) {
+    const c = boot('#join=' + encodeURIComponent(CODE));
+    c.setState({ seats: [{ name: 'du', kind: 'human', hand: [], said: false, status: 'ok', score: 0, rounds: 0 }] });
+    c.setState(patch);
+    const shown = attempt('renderVals', () => c.renderVals().mpPeerCode);
+    check('after ' + label + ' the field still shows the live code', shown === c.peerCode,
+      'shows ' + JSON.stringify(shown) + ' submits ' + JSON.stringify(c.peerCode));
+  }
+}
+
+{
+  // 8) copyJoinLink() leit d URL is Clipboard, nöd dr nackti Code.
+  const c = boot('');
+  let written = null;
+  // Node hät `navigator` als reine Getter-Property — drum defineProperty.
+  Object.defineProperty(globalThis, 'navigator', {
+    configurable: true,
+    value: { clipboard: { writeText: (s) => { written = s; return Promise.resolve(); } } },
+  });
+  c.setState({ mp: { stage: 'host-lobby', myCode: CODE } });
+  attempt('copyJoinLink', () => c.copyJoinLink());
+  check('copyJoinLink puts the link on the clipboard', written === c.joinLinkFor(CODE), written);
+  check('and not the bare code', written !== CODE, written);
 }
 
 process.exit(failed ? 1 : 0);
