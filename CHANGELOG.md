@@ -6,9 +6,12 @@ All notable changes to this project are documented here, following
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-29
+
 ### Added
 
 - Host an online game by sharing a link instead of a code: the guest opens it and the offer is already filled in, one tap from joining (#41)
+- Fullscreen toggle (⛶) in the game navigation
 
 ### Fixed
 
