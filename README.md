@@ -71,6 +71,23 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
+## Datenschutz / Privacy
+
+**Deutsch.** Dieses Spiel zählt Besuche und Spielereignisse (Spielstart, Rundenstart,
+Rundenende, Online-Verbindung) mit **Umami**, selbst gehostet auf einem Server in
+**Deutschland** (`stats.freaxnx01.ch`). Es werden keine Cookies gesetzt und keine
+personenbezogenen Daten gespeichert — keine Spielernamen, keine Verbindungscodes. Die
+IP-Adresse wird nicht gespeichert, sondern nur kurzzeitig für die Bestimmung von Land und
+Region verwendet. Wird das Skript blockiert (z. B. durch einen Adblocker), läuft das
+Spiel unverändert weiter.
+
+**English.** This game counts visits and game events (game start, round start, round end,
+online connection) with **Umami**, self-hosted on a server in **Germany**
+(`stats.freaxnx01.ch`). No cookies are set and no personal data is stored — no player
+names, no connection codes. The IP address is not stored; it is used only transiently to
+look up country and region. If the script is blocked (e.g. by an ad blocker), the game
+runs exactly as before.
+
 ## Source & Maintenance
 
 `index.html` is a bundled artifact. The original, editable source lives in `source/`:

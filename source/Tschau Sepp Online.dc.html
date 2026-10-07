@@ -9,6 +9,9 @@
 <script src="../vendor/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z"></script>
 <script src="../vendor/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1"></script>
 <script src="./support.js"></script>
+<!-- Umami analytics (self-hosted, server in Germany). data-domains keeps dev/local runs out of the stats. -->
+<script defer src="https://stats.freaxnx01.ch/g.js" data-website-id="35f395c0-a1ba-4706-ad56-7c95fcc0169f" data-domains="github.freaxnx01.ch"></script>
+<script src="../analytics.js"></script>
 </head>
 <body>
 <x-dc>
@@ -205,7 +208,7 @@
             <button onClick="{{ startSpectate }}" title="Zwei Computer spieled gägenand — du luegsch nume zue" style="width: 100%; font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1.3; color: #6b5636; background: rgba(0,0,0,0.05); border: 2px solid rgba(122,90,18,0.35); border-radius: 10px; padding: 9px 18px; cursor: pointer;" style-hover="filter: brightness(1.06); color: #4a3416;">Zueluege: Gmüetlich gäge Gwieft</button>
           </div>
           <div style="margin-top: 16px; font-size: 14px; color: #8a7350; font-style: italic;">Tipp: Bi dr letschte Charte nöd vergässe «Tschau!» z'säge…</div>
-          <div style="margin-top: 10px; font-size: 13px;"><a href="https://github.com/freaxnx01/game-tschau-sepp" target="_blank" rel="noopener" style="color: #7c1f26; font-weight: 700;">Quellcode uf GitHub — freaxnx01/game-tschau-sepp</a></div>
+          <div style="margin-top: 10px; font-size: 13px;"><a href="https://github.com/freaxnx01/game-tschau-sepp" target="_blank" rel="noopener" style="color: #7c1f26; font-weight: 700;">Quellcode uf GitHub — freaxnx01/game-tschau-sepp</a> · <a href="https://github.com/freaxnx01/game-tschau-sepp#datenschutz--privacy" target="_blank" rel="noopener" style="color: #7c1f26; font-weight: 700;">Datenschutz</a></div>
         </div>
       </div>
     </sc-if>
@@ -721,6 +724,14 @@ class Component extends DCLogic {
   }
 
   // ---------- Flow ----------
+  // Umami (analytics.js) — no-op wenn blockiert, im Node-Harness oder offline. Kei Näme, kei Codes.
+  track(name, data, once) {
+    try {
+      const a = typeof window !== 'undefined' && window.gameAnalytics;
+      if (a) a[once ? 'trackOnce' : 'track'](name, { game: 'tschau-sepp', ...data });
+    } catch (e) { }
+  }
+  inputType() { try { return window.gameAnalytics.input(); } catch (e) { return 'unknown'; } }
   after(ms, fn) { const tk = this.tk; setTimeout(() => { if (tk === this.tk && this.mounted !== false) fn(); }, ms); }
   componentDidMount() {
     this.onR = () => this.forceUpdate(); window.addEventListener('resize', this.onR);
@@ -859,6 +870,10 @@ class Component extends DCLogic {
       message: this.M(first, 'start'),
     });
     this.snd('deal');
+    this.roundT0 = Date.now();
+    const mode = this.state.mode;
+    this.track('game-start', { mode, input: this.inputType() }, true);
+    this.track('round-start', { mode, round: this.state.roundNum });
     this.maybeBot(1400);
   }
   maybeBot(delay) {
@@ -1523,6 +1538,9 @@ class Component extends DCLogic {
     const topCard = s.discard[s.discard.length - 1] || null;
     this.setState({ phase: 'roundEnd', seats, busy: false, roundEnd: { winner, pts, card: topCard, cards: lastCards.length ? lastCards : (topCard ? [topCard] : []) } });
     this.sndRound(winner);
+    const mode = s.mode;
+    const result = (mode === 'bot' || mode === 'host') ? (winner === s.mySeat ? 'win' : 'loss') : 'other';
+    this.track('round-end', { mode, round: s.roundNum, result, durationSec: Math.round((Date.now() - (this.roundT0 || Date.now())) / 1000) });
     if (this.state.bubble) this.after(2200, () => this.setState({ bubble: null }));
   }
   nextRound() {
@@ -1670,6 +1688,7 @@ class Component extends DCLogic {
       const name = (collides && !d.custom) ? this.uniqueFunnyName(existingNames) : incomingName;
       const seats = this.state.seats.concat([{ name, kind: 'remote', hand: [], said: false, status: 'ok', score: 0, rounds: 0 }]);
       this.snd('tschau');
+      this.track('online-connect', { role: 'host' });
       this.setState({ seats, mp: { stage: 'host-lobby', myCode: '', expiresAt: null } });
       this.sendLobby();
       return;
@@ -1747,6 +1766,7 @@ class Component extends DCLogic {
           const isCustom = !!(this.state.myName && this.state.myNameCustom);
           this.send({ t: 'hello', name: (this.state.myName || this.funnyName()).slice(0, 18), custom: isCustom });
           this.snd('tschau');
+          this.track('online-connect', { role: 'guest' });
           this.setState({ mode: 'guest', mp: { stage: 'guest-wait', lobby: null } });
         };
         ch.onmessage = ev => { try { this.onHostMsg(JSON.parse(ev.data)); } catch (err) { } };
@@ -1877,6 +1897,7 @@ class Component extends DCLogic {
       hand: j === d.mySeat ? d.myHand : Array.from({ length: x.n }, (_, q) => ({ id: 9000 + j * 100 + q, suit: 'rose', rank: '6' })),
     }));
     const message = d.lastM ? this.msgText(d.lastM.w, d.lastM.k, d.lastM.x, d.mySeat, seats) : '';
+    if (d.phase !== 'menu') this.track('game-start', { mode: 'guest', input: this.inputType() }, true);
     this.setState({
       phase: d.phase, mySeat: d.mySeat, seats, discard: d.discard, pile: new Array(d.pileN).fill(0),
       turn: d.turn, wish: d.wish, pending7: d.pending7, pendingWinner: d.pendingWinner, cover: d.cover, wisher: d.wisher,
