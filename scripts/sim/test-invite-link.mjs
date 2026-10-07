@@ -137,4 +137,19 @@ function boot(hash) {
   check('and not the bare code', written !== CODE, written);
 }
 
+{
+  // 9) Vo Hand iifüege muess gah: s Feld isch controlled (value=mpPeerCode),
+  //    drum muess setPeer es Neu-Rendere uslöse, susch setzt React s Feld zrugg.
+  const c = boot('');
+  c.setState({ mp: { stage: 'join-paste' } });
+  let renders = 0;
+  c.forceUpdate = () => { renders++; };
+  const set = c.setState.bind(c);
+  c.setState = (u, cb) => { renders++; set(u, cb); };
+  attempt('setPeer', () => c.renderVals().setPeer({ target: { value: CODE } }));
+  check('a pasted code is kept', c.peerCode === CODE, 'peerCode=' + c.peerCode);
+  check('typing into the field re-renders it', renders > 0, 'renders=' + renders);
+  check('and the field then shows the pasted code', c.renderVals().mpPeerCode === CODE);
+}
+
 process.exit(failed ? 1 : 0);

@@ -2117,7 +2117,7 @@ class Component extends DCLogic {
       makeCode: () => this.mpMakeCode(),
       startMp: () => this.mpStartGame(),
       copyCode: () => this.copyCode(),
-      setPeer: (e) => { this.peerCode = e.target.value; },
+      setPeer: (e) => { this.peerCode = e.target.value; this.forceUpdate(); },
       // table
       feltBg: 'radial-gradient(ellipse at 50% 32%, ' + felt + ', color-mix(in oklab, ' + felt + ', black 48%))',
       cardW: W, cardH: H, botW: bW, handH: H + 46, discardW, discardCX,
