@@ -733,6 +733,11 @@ class Component extends DCLogic {
       if (a) a[once ? 'trackOnce' : 'track'](name, { game: 'tschau-sepp', ...data });
     } catch (e) { }
   }
+  // Nur Näme us em NAME_POOL (au «Turbo-Sepp 2») gönd a Umami — sälber tippti Näme wärded 'custom'.
+  poolName(n) {
+    const base = String(n || '').replace(/ \d+$/, '');
+    return this.NAME_POOL.includes(base) ? n : 'custom';
+  }
   inputType() { try { return window.gameAnalytics.input(); } catch (e) { return 'unknown'; } }
   after(ms, fn) { const tk = this.tk; setTimeout(() => { if (tk === this.tk && this.mounted !== false) fn(); }, ms); }
   componentDidMount() {
@@ -1542,7 +1547,12 @@ class Component extends DCLogic {
     this.sndRound(winner);
     const mode = s.mode;
     const result = (mode === 'bot' || mode === 'host') ? (winner === s.mySeat ? 'win' : 'loss') : 'other';
-    this.track('round-end', { mode, round: s.roundNum, result, durationSec: Math.round((Date.now() - (this.roundT0 || Date.now())) / 1000) });
+    const players = {};
+    if (mode === 'host') {
+      players.players = seats.length;
+      seats.forEach((x, i) => { players['p' + (i + 1) + 'Name'] = this.poolName(x.name); players['p' + (i + 1) + 'Score'] = x.score; });
+    }
+    this.track('round-end', { mode, round: s.roundNum, result, durationSec: Math.round((Date.now() - (this.roundT0 || Date.now())) / 1000), ...players });
     if (this.state.bubble) this.after(2200, () => this.setState({ bubble: null }));
   }
   nextRound() {
