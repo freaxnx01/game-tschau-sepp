@@ -7,7 +7,13 @@ All notable changes to this project are documented here, following
 ## [Unreleased]
 
 ### Added
+
 - Hover over the version number to see when the game was last updated, in your own time zone, and how long ago
+- Zückerli: winning a round while the opponents hold 0 points still scores 2 points. Applies in every mode, on by default, switchable in the menu and remembered across visits
+
+### Fixed
+
+- The guest can paste the host's code by hand again — the join field reset itself after every keystroke since the invite link
 
 ## [0.6.0] - 2026-09-29
 

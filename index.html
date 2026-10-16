@@ -188,6 +188,13 @@
               <button onClick="{{ o.pick }}" aria-pressed="{{ o.pressed }}" style="font-family: inherit; font-size: 18px; font-weight: 800; color: {{ o.fg }}; background: {{ o.bg }}; border: 2px solid {{ o.border }}; border-radius: 10px; padding: 7px 20px; cursor: pointer; box-shadow: {{ o.shadow }}; transform: {{ o.lift }};" style-hover="filter: brightness(1.12);">{{ o.label }}</button>
             </sc-for>
           </div>
+          <!-- Zückerli — e Sieg über 0 Pünkt git trotzdem 2 Pünkt -->
+          <div style="display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px 12px; margin-bottom: 16px;">
+            <span style="font-size: 18px; font-weight: 700; color: #4a3416;">Zückerli (2 Pünkt bi 0):</span>
+            <sc-for list="{{ zueckerliOptions }}" as="o" hint-placeholder-count="2">
+              <button onClick="{{ o.pick }}" aria-pressed="{{ o.pressed }}" style="font-family: inherit; font-size: 18px; font-weight: 800; color: {{ o.fg }}; background: {{ o.bg }}; border: 2px solid {{ o.border }}; border-radius: 10px; padding: 7px 20px; cursor: pointer; box-shadow: {{ o.shadow }}; transform: {{ o.lift }};" style-hover="filter: brightness(1.12);">{{ o.label }}</button>
+            </sc-for>
+          </div>
           <div style="font-size: 18px; font-weight: 700; color: #4a3416; margin-bottom: 12px;">Gäge dr Computer:</div>
           <div style="display: flex; gap: 16px; justify-content: center;">
             <button onClick="{{ startEasy }}" style="flex: 1; font-family: inherit; font-size: 20px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #4c8a5c, #31694a); border: 2px solid #1e4230; border-radius: 12px; padding: 13px 26px; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.35);" style-hover="filter: brightness(1.12); transform: translateY(-2px);">Gmüetlich<br><span style="font-size: 14px; font-weight: 400; font-style: italic;">für gmüetlichi Sepp</span></button>
@@ -420,7 +427,7 @@
             <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">U</span><span>Dr <b>Under</b> isch dr Joker — dörf immer gspielt wärde, und du <b>wünschisch dir e Farb</b>.</span></div>
             <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">A</span><span>S'<b>Ass</b> muess <b>«deckt»</b> wärde: grad no en Ass oder e Charte vo dr <b>gliche Farb</b> obedruf. Chasch nöd decke, muesch <b>zieh, bis es goht</b>. Mit eme blutte Ass chasch nöd fertig mache.</span></div>
             <div style="display: flex; gap: 10px; margin-bottom: 8px;"><span style="font-weight: 900; color: #b8923a;">!</span><span>Bi dr <b>letschte Charte</b> muesch vorhär <b>«Tschau!»</b> säge (Chnopf drucke) — susch gits 2 Strofcharte. Mit dr letschte Charte heissts denn <b>«Sepp!»</b>.</span></div>
-            <div style="display: flex; gap: 10px;"><span style="font-weight: 900; color: #b8923a;">★</span><span>Wär gwünnt, überchunnt d Pünkt vo allne Gägnercharte: <b>Ass 11 · Banner 10 · Künig 4 · Ober 3 · Under 2</b>.</span></div>
+            <div style="display: flex; gap: 10px;"><span style="font-weight: 900; color: #b8923a;">★</span><span>Wär gwünnt, überchunnt d Pünkt vo allne Gägnercharte: <b>Ass 11 · Banner 10 · Künig 4 · Ober 3 · Under 2</b>. Händ d Gägner 0 Pünkt, git's es <b>Zückerli</b> vo 2 Pünkt (im Menü abschaltbar).</span></div>
           </div>
           <div style="text-align: center; margin-top: 22px;">
             <button onClick="{{ closeRules }}" style="font-family: inherit; font-size: 18px; font-weight: 800; color: #f6efd9; background: linear-gradient(180deg, #8a5f38, #6b4426); border: 2px solid #3a2512; border-radius: 12px; padding: 10px 34px; cursor: pointer;" style-hover="filter: brightness(1.12);">Verstande!</button>
@@ -484,9 +491,12 @@ class Component extends DCLogic {
   static STRANDED_PENALTY = 25; // Abzug, wenn dr Zug e Sackgass-Hand hinderlaat
   static START_CARD_OPTIONS = [5, 7];
   static START_CARDS_KEY = 'tschauSeppStartCards';
+  static ZUECKERLI_KEY = 'tschauSeppZueckerli';
+  static ZUECKERLI_PTS = 2; // so viel git e Sieg, wenn d Gägner 0 Pünkt i dr Hand händ
   state = {
     phase: 'menu', // menu | play | wish | roundEnd
     startCards: Component.normalizeStartCards(this.props.startcharte),
+    zueckerli: true,
     hotseatNames: ['Spiler 1', 'Spiler 2'],
     mode: 'bot', // bot | hotseat | host | guest
     difficulty: 'gwieft',
@@ -749,6 +759,8 @@ class Component extends DCLogic {
     this.mpInt = setInterval(() => this.mpTickCheck(), 1000);
     const stored = this.storedStartCards();
     if (stored != null) this.setState({ startCards: stored });
+    const storedZ = this.storedZueckerli();
+    if (storedZ != null) this.setState({ zueckerli: storedZ });
     this.readJoinLink();
   }
   componentWillUnmount() {
@@ -805,6 +817,36 @@ class Component extends DCLogic {
     } catch (e) {
       // Nöd speicherbar (privats Fänschter) — d Wahl gilt trotzdem für die Sitzig.
     }
+  }
+
+  // Query: di gspeicheret Zückerli-Wahl, oder null wenn nüt (Gültigs) gspeicheret isch.
+  storedZueckerli() {
+    try {
+      const raw = window.localStorage.getItem(Component.ZUECKERLI_KEY);
+      if (raw === 'on') return true;
+      if (raw === 'off') return false;
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Command: schaltet s Zückerli ii oder us. Nume im Menu — e laufigi Partie
+  // behaltet iri Regle.
+  setZueckerli(on) {
+    if (this.state.phase !== 'menu') return;
+    if (on === this.state.zueckerli) return;
+    this.setState({ zueckerli: on });
+    try {
+      window.localStorage.setItem(Component.ZUECKERLI_KEY, on ? 'on' : 'off');
+    } catch (e) {
+      // Nöd speicherbar (privats Fänschter) — d Wahl gilt trotzdem für die Sitzig.
+    }
+  }
+
+  // Query: git s Zückerli für die Rundä? Nume wenn's ii isch und d Gägner 0 Pünkt händ.
+  earnsZueckerli(rawPts) {
+    return this.state.zueckerli && rawPts === 0;
   }
 
   // Query: dr Name vom Sitz i, susch dr Standard.
@@ -1531,8 +1573,10 @@ class Component extends DCLogic {
   // ---------- Round end ----------
   endRound(winner) {
     const s = this.state;
-    let pts = 0;
-    s.seats.forEach((x, i) => { if (i !== winner) pts += this.pointsOf(x.hand); });
+    let rawPts = 0;
+    s.seats.forEach((x, i) => { if (i !== winner) rawPts += this.pointsOf(x.hand); });
+    const zueckerli = this.earnsZueckerli(rawPts);
+    const pts = zueckerli ? Component.ZUECKERLI_PTS : rawPts;
     const seats = s.seats.map((x, i) => i === winner ? { ...x, score: x.score + pts, rounds: x.rounds + 1 } : x);
     // Charte vom letschte Zug vom Gwinner: dr zämehängend Lauf am Änd vo dr History mit sim Sitz.
     // (Es Zug cha meh als ei Charte sii — z.B. Ass decke — drum nämmer dr ganz Lauf, nöd nur d oberschti.)
@@ -1543,7 +1587,7 @@ class Component extends DCLogic {
       lastCards.unshift({ id: hist[i].id, suit: hist[i].suit, rank: hist[i].rank });
     }
     const topCard = s.discard[s.discard.length - 1] || null;
-    this.setState({ phase: 'roundEnd', seats, busy: false, roundEnd: { winner, pts, card: topCard, cards: lastCards.length ? lastCards : (topCard ? [topCard] : []) } });
+    this.setState({ phase: 'roundEnd', seats, busy: false, roundEnd: { winner, pts, zueckerli, card: topCard, cards: lastCards.length ? lastCards : (topCard ? [topCard] : []) } });
     this.sndRound(winner);
     const mode = s.mode;
     const result = (mode === 'bot' || mode === 'host') ? (winner === s.mySeat ? 'win' : 'loss') : 'other';
@@ -2218,10 +2262,23 @@ class Component extends DCLogic {
           pick: () => this.setStartCards(n),
         };
       }),
+      zueckerliOptions: [['Ii', true], ['Us', false]].map(([label, value]) => {
+        const on = value === s.zueckerli;
+        return {
+          label,
+          pressed: on ? 'true' : 'false',
+          fg: on ? '#f6efd9' : '#6b5636',
+          bg: on ? 'linear-gradient(180deg, #c9a24a, #a8801f)' : 'linear-gradient(180deg, #efe6cd, #ded2b4)',
+          border: on ? '#7a5a12' : 'rgba(122,90,18,0.35)',
+          shadow: on ? '0 4px 10px rgba(0,0,0,0.35)' : 'none',
+          lift: on ? 'translateY(-1px)' : 'none',
+          pick: () => this.setZueckerli(value),
+        };
+      }),
       wishOptions: suits.map(x => ({ uri: this.suitUri(x), name: this.suitName(x), pick: () => this.pickWish(x) })),
       roundEndTitle: re ? (re.winner === my ? 'Sepp! Du hesch d Rundä gwunne!' : (this.nm(re.winner, my, seats) + ' het d Rundä gwunne.')) : '',
       roundEndColor: re && re.winner === my ? '#31694a' : '#7c1f26',
-      roundEndPts: re ? ('+' + re.pts + ' Pünkt ' + (re.winner === my ? 'für di' : ('für ' + this.nm(re.winner, my, seats)))) : '',
+      roundEndPts: re ? ('+' + re.pts + ' Pünkt ' + (re.winner === my ? 'für di' : ('für ' + this.nm(re.winner, my, seats))) + (re.zueckerli ? ' — 🍬 Zückerli!' : '')) : '',
       roundEndScore: 'Stand: ' + seats.map((x, i) => (i === my ? 'Du' : x.name) + ' ' + x.score).join(' · '),
       // handlers
       startSpectate: () => this.startSpectate(),

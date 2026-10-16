@@ -12,7 +12,8 @@ synthesized sound, and a fully Swiss-German (Schwiizerdütsch) interface.
 
 Match the top discard card by **suit** or **rank**. Can't (or won't) play? Draw one —
 if it fits you may play it, otherwise pass. First to empty their hand wins the round
-and scores the value of the opponent's remaining cards.
+and scores the value of the opponent's remaining cards. If those are worth 0, the win
+still scores 2 points — the *Zückerli* (on by default, can be switched off in the menu).
 
 | Card | Effect |
 | --- | --- |
