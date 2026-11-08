@@ -6,6 +6,10 @@ All notable changes to this project are documented here, following
 
 ## [Unreleased]
 
+### Changed
+
+- Visits on the upcoming short address **freax.games** are counted in the stats too, so nothing is lost when the GamesHub moves there.
+
 ## [0.7.0] - 2026-10-16
 
 ### Added
