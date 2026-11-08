@@ -8,6 +8,7 @@ All notable changes to this project are documented here, following
 
 ### Changed
 
+- Visits on the game's own address **tschau-sepp.freax.games** are counted in the stats too, ahead of the move there.
 - Visits on the upcoming short address **freax.games** are counted in the stats too, so nothing is lost when the GamesHub moves there.
 
 ## [0.7.0] - 2026-10-16

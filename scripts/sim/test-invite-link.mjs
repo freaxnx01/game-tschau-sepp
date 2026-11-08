@@ -20,7 +20,7 @@ function stubWindow(hash) {
   globalThis.window = {
     innerHeight: 900, innerWidth: 1400,
     addEventListener() {}, removeEventListener() {},
-    location: { origin: 'https://github.freaxnx01.ch', pathname: '/game-tschau-sepp/', search: '', hash },
+    location: { origin: 'https://tschau-sepp.freax.games', pathname: '/', search: '', hash },
     history: { replaceState: (a, b, url) => { replaced.push(url); globalThis.window.location.hash = ''; } },
   };
   globalThis.document = { addEventListener() {}, removeEventListener() {} };
@@ -59,7 +59,7 @@ function boot(hash) {
   const c = boot('');
   const link = attempt('joinLinkFor', () => c.joinLinkFor(CODE));
   check('the link points at this page with a #join fragment',
-    link === 'https://github.freaxnx01.ch/game-tschau-sepp/#join=' + encodeURIComponent(CODE), link);
+    link === 'https://tschau-sepp.freax.games/#join=' + encodeURIComponent(CODE), link);
 }
 
 {
@@ -95,7 +95,7 @@ function boot(hash) {
   const c = boot('#join=' + encodeURIComponent(CODE));
   check('the fragment is cleared from the address bar', replaced.length === 1,
     JSON.stringify(replaced));
-  check('and the cleaned url keeps path and search', replaced[0] === '/game-tschau-sepp/',
+  check('and the cleaned url keeps path and search', replaced[0] === '/',
     replaced[0]);
 }
 
